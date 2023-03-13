@@ -11,7 +11,7 @@ and Daybreak Game Company's [Terms of Service](https://www.daybreakgames.com/ter
 
 DaybreakGames.Census is a library that makes it much easier to use the Census API provided by Daybreak Games Company.
 
-For a full demonstration check out the [DemoApp](https://github.com/Lampjaw/DaybreakGames.Census/tree/master/src/DemoApp)!
+For a full demonstration check out the [DemoApp](https://github.com/voidwell/DaybreakGames.Census/tree/master/src/DemoApp)!
 
 ## Table of Contents
 
@@ -186,5 +186,5 @@ Uri uri = query.GetUri();
 
 This package also allows you to leverage the Census' websocket service to get data
 in real time. Inject `ICensusStreamClient` and subcribe to events.
-See the [WebsocketMonitor class in the DemoApp](https://github.com/Lampjaw/DaybreakGames.Census/blob/master/src/DemoApp/WebsocketMonitor.cs)
+See the [WebsocketMonitor class in the DemoApp](https://github.com/voidwell/DaybreakGames.Census/blob/master/src/DemoApp/WebsocketMonitor.cs)
 for a full example.
