@@ -11,5 +11,9 @@ namespace DaybreakGames.Census.Exceptions
         public CensusException(string message) : base(message)
         {
         }
+
+        public CensusException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 }

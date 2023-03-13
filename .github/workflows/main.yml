@@ -1,0 +1,43 @@
+name: main
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+  release:
+    types: [published]
+    
+jobs:
+  build:
+      
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+
+    - name: Restore dependencies
+      run: nuget restore
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.x
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test /p:Configuration=Release --no-restore --no-build --verbosity normal
+      
+    - name: Publish
+      if: github.event_name == 'release' && github.event.action == 'published'
+      run: |
+        dotnet pack -o ./pack -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=$GITHUB_REF_NAME
+        nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+        nuget push **\*.snupkg -Source 'https://nuget.smbsrc.net/' -ApiKey ${{secrets.NUGET_API_KEY}}

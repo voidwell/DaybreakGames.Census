@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DaybreakGames.Census.Operators
 {
@@ -7,52 +8,52 @@ namespace DaybreakGames.Census.Operators
         private object _comparator { get; set; }
         private OperatorType _operator { get; set; }
 
-        public void Equals(string value)
+        public void Equals(params string[] value)
         {
             SetEquals(value);
         }
 
-        public void Equals(int value)
+        public void Equals(params int[] value)
         {
             SetEquals(value);
         }
 
-        public void Equals(double value)
+        public void Equals(params double[] value)
         {
             SetEquals(value);
         }
 
-        public void Equals(float value)
+        public void Equals(params float[] value)
         {
             SetEquals(value);
         }
 
-        public void Equals(DateTime value)
+        public void Equals(params DateTime[] value)
         {
             SetEquals(value);
         }
 
-        public void NotEquals(string value)
+        public void NotEquals(params string[] value)
         {
             SetNotEquals(value);
         }
 
-        public void NotEquals(int value)
+        public void NotEquals(params int[] value)
         {
             SetNotEquals(value);
         }
 
-        public void NotEquals(double value)
+        public void NotEquals(params double[] value)
         {
             SetNotEquals(value);
         }
 
-        public void NotEquals(float value)
+        public void NotEquals(params float[] value)
         {
             SetNotEquals(value);
         }
 
-        public void NotEquals(DateTime value)
+        public void NotEquals(params DateTime[] value)
         {
             SetNotEquals(value);
         }
@@ -229,12 +230,30 @@ namespace DaybreakGames.Census.Operators
 
         private string GetComparatorString()
         {
-            if (_comparator is DateTime dtValue)
+            if (_operator == OperatorType.Equals || _operator == OperatorType.NotEquals)
+            {
+                if (_comparator is Array)
+                {
+                    var values = new List<string>();
+                    foreach(var value in (Array)_comparator)
+                    {
+                        values.Add(ToValueString(value));
+                    }
+                    return string.Join(',', values);
+                }
+            }
+
+            return ToValueString(_comparator);
+        }
+
+        private string ToValueString(object value)
+        {
+            if (value is DateTime dtValue)
             {
                 return dtValue.ToString("yyyy-MM-dd HH\\:mm\\:ss");
             }
 
-            return _comparator.ToString();
+            return value.ToString();
         }
 
         internal enum OperatorType

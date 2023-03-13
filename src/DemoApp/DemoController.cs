@@ -1,7 +1,8 @@
 ﻿using DaybreakGames.Census;
 using DemoApp.Models;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace DemoApp
@@ -24,14 +25,18 @@ namespace DemoApp
         [HttpPost("character")]
         public async Task<IActionResult> GetCharacter(string characterName)
         {
-            var query = _censusFactory.Create("character");
-            query.Where("name.first_lower").StartsWith(characterName.ToLower());
-            query.SetLimit(10);
+            var names = characterName.ToLower().Split(',').Select(a => a.Trim()).ToArray();
+
+            var query = _censusFactory.Create("character")
+                .Where("name.first_lower", a => a.Equals(names))
+                .SetLimit(10);
+
+            var uu = query.GetUri();
 
             // In this example GetListAsync is passing a model to bind the response items to
             var characterList = await query.GetListAsync<CensusCharacterModel>();
 
-            ViewData["CharacterList"] = JToken.FromObject(characterList).ToString();
+            ViewData["CharacterList"] = JsonSerializer.Serialize(characterList);
 
             return View("Index");
         }
@@ -45,7 +50,7 @@ namespace DemoApp
             // If no model is specified in the Get request then it's returned as a JToken
             var outfit = await query.GetAsync();
 
-            ViewData["Outfit"] = JToken.FromObject(outfit).ToString();
+            ViewData["Outfit"] = JsonSerializer.Serialize(outfit).ToString();
 
             return View("Index");
         }

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Net.WebSockets;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Websocket.Client;
 
@@ -18,10 +18,10 @@ namespace DaybreakGames.Census.Stream
         {
             return new ClientWebSocket { Options = { KeepAliveInterval = TimeSpan.FromSeconds(5) } };
         });
-        private static readonly JsonSerializerSettings sendMessageSettings = new JsonSerializerSettings
+        private static readonly JsonSerializerOptions sendMessageSettings = new JsonSerializerOptions
         {
-            NullValueHandling = NullValueHandling.Ignore,
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
         private string _serviceId { get; set; }
@@ -106,7 +106,7 @@ namespace DaybreakGames.Census.Stream
 
         public void Subscribe(CensusStreamSubscription subscription)
         {
-            var sMessage = JsonConvert.SerializeObject(subscription, sendMessageSettings);
+            var sMessage = JsonSerializer.Serialize(subscription, sendMessageSettings);
 
             _logger.LogInformation($"Subscribing to census with: {sMessage}");
 

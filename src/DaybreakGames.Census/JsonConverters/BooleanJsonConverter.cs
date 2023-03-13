@@ -1,29 +1,22 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DaybreakGames.Census.JsonConverters
 {
-    public class BooleanJsonConverter : JsonConverter
+    sealed class BooleanJsonConverter : JsonConverter<bool>
     {
-        public override bool CanConvert(Type objectType)
+        public override bool Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return objectType == typeof(bool);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            bool parseValue;
-            if (Boolean.TryParse(reader.Value.ToString(), out parseValue))
+            if (bool.TryParse(reader.GetString(), out var parseValue))
             {
                 return parseValue;
             }
 
-            return reader.Value.ToString() == "1";
+            return reader.GetString() == "1";
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            throw new NotImplementedException();
-        }
+        public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options) =>
+            writer.WriteBooleanValue(value);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using DaybreakGames.Census.Stream;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Websocket.Client;
@@ -63,19 +63,15 @@ namespace DemoApp
                 return;
             }
 
-            JToken msg;
-
             try
             {
-                msg = JToken.Parse(message);
+                var msg = JsonDocument.Parse(message);
+                _logger.LogInformation($"Received Message: {msg.RootElement.ToString()}");
             }
             catch(Exception)
             {
                 _logger.LogError(91097, "Failed to parse message: {0}", message);
-                return;
             }
-
-            _logger.LogInformation($"Received Message: {msg.ToString()}");
         }
 
         private Task OnDisconnect(DisconnectionInfo info)

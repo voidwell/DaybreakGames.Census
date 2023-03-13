@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using DaybreakGames.Census.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using DaybreakGames.Census.Operators;
 using DaybreakGames.Census.JsonConverters;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DaybreakGames.Census
 {
@@ -18,7 +18,7 @@ namespace DaybreakGames.Census
         private readonly IOptions<CensusOptions> _options;
         private readonly ILogger<CensusClient> _logger;
         private readonly HttpClient _client;
-        private readonly JsonSerializer _deserializer;
+        private readonly JsonSerializerOptions _serializerOptions;
 
         public CensusClient(IOptions<CensusOptions> options, ILogger<CensusClient> logger)
         {
@@ -27,16 +27,16 @@ namespace DaybreakGames.Census
 
             _client = new HttpClient();
 
-            var settings = new JsonSerializerSettings
+            _serializerOptions = new JsonSerializerOptions
             {
-                ContractResolver = new UnderscorePropertyNamesContractResolver(),
-                Converters = new JsonConverter[]
+                PropertyNamingPolicy = new UnderscorePropertyJsonNamingPolicy(),
+                NumberHandling = JsonNumberHandling.AllowReadingFromString,
+                Converters =
                 {
                     new BooleanJsonConverter(),
                     new DateTimeJsonConverter()
                 }
             };
-            _deserializer = JsonSerializer.Create(settings);
         }
 
         public CensusQuery CreateQuery(string serviceName)
@@ -77,23 +77,20 @@ namespace DaybreakGames.Census
                     throw new CensusConnectionException($"Census returned status code {result.StatusCode}");
                 }
 
-                JToken jResult;
+                JsonElement jResult;
 
                 try
                 {
                     var serializedString = await result.Content.ReadAsStringAsync();
-                    jResult = JsonConvert.DeserializeObject<JToken>(serializedString, new JsonSerializerSettings
-                    {
-                        ContractResolver = new UnderscorePropertyNamesContractResolver()
-                    });
+                    jResult = JsonSerializer.Deserialize<JsonElement>(serializedString);
                 }
-                catch (JsonReaderException)
+                catch (JsonException ex)
                 {
-                    throw new CensusException("Failed to read JSON. Endpoint may be in maintence mode.");
+                    throw new CensusException("Failed to read JSON. Endpoint may be in maintence mode.", ex);
                 }
 
-                var error = jResult.Value<string>("error");
-                var errorCode = jResult.Value<string>("errorCode");
+                var error = jResult.GetPropertyValue<string>("error");
+                var errorCode = jResult.GetPropertyValue<string>("errorCode");
 
                 if (error != null)
                 {
@@ -108,12 +105,12 @@ namespace DaybreakGames.Census
                 }
                 else if (errorCode != null)
                 {
-                    var errorMessage = jResult.Value<string>("errorMessage");
+                    var errorMessage = jResult.GetPropertyValue<string>("errorMessage");
 
                     throw new CensusServerException($"{errorCode}: {errorMessage}");
                 }
 
-                var jBody = jResult.SelectToken($"{query.ServiceName}_list");
+                var jBody = jResult.GetProperty($"{query.ServiceName}_list");
                 return Convert<T>(jBody);
             }
             catch(Exception ex)
@@ -126,7 +123,7 @@ namespace DaybreakGames.Census
         public async Task<IEnumerable<T>> ExecuteQueryBatch<T>(CensusQuery query)
         {
             var count = 0;
-            List<JToken> batchResult = new List<JToken>();
+            List<JsonElement> batchResult = new List<JsonElement>();
 
             if (query.Limit == null)
             {
@@ -138,7 +135,7 @@ namespace DaybreakGames.Census
                 query.SetStart(count);
             }
 
-            var result = await ExecuteQueryList<JToken>(query);
+            var result = await ExecuteQueryList<JsonElement>(query);
 
             if (result.Count() < Constants.DefaultBatchLimit)
             {
@@ -157,7 +154,7 @@ namespace DaybreakGames.Census
                 count += result.Count();
                 query.SetStart(count);
 
-                result = await ExecuteQuery<JToken>(query);
+                result = await ExecuteQuery<IEnumerable<JsonElement>>(query);
             } while (result.Any());
 
             return batchResult.Select(r => Convert<T>(r));
@@ -197,9 +194,9 @@ namespace DaybreakGames.Census
             }
         }
 
-        private T Convert<T>(JToken content)
+        private T Convert<T>(JsonElement content)
         {
-            return content.ToObject<T>(_deserializer);
+            return content.Deserialize<T>(_serializerOptions);
         }
 
         public void Dispose()

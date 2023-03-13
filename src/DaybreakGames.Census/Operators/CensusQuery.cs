@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace DaybreakGames.Census.Operators
@@ -102,45 +102,6 @@ namespace DaybreakGames.Census.Operators
             return this;
         }
 
-        public CensusJoin JoinService(string service)
-        {
-            var newJoin = new CensusJoin(service);
-
-            if (Join == null)
-            {
-                Join = new List<CensusJoin>();
-            }
-
-            Join.Add(newJoin);
-            return newJoin;
-        }
-
-        public CensusTree TreeField(string field)
-        {
-            var newTree = new CensusTree(field);
-
-            if (Tree == null)
-            {
-                Tree = new List<CensusTree>();
-            }
-
-            Tree.Add(newTree);
-            return newTree;
-        }
-
-        public CensusOperand Where(string field)
-        {
-            var newArg = new CensusArgument(field);
-
-            if (Terms == null)
-            {
-                Terms = new List<CensusArgument>();
-            }
-
-            Terms.Add(newArg);
-            return newArg.Operand;
-        }
-
         public CensusQuery ShowFields(params string[] fields)
         {
             if (Show == null)
@@ -225,19 +186,102 @@ namespace DaybreakGames.Census.Operators
             return this;
         }
 
-        public Task<JToken> GetAsync()
+        public CensusQuery JoinService(string service, Action<CensusJoin> join)
         {
-            return GetAsync<JToken>();
+            var newJoin = new CensusJoin(service);
+            join.Invoke(newJoin);
+
+            if (Join == null)
+            {
+                Join = new List<CensusJoin>();
+            }
+
+            Join.Add(newJoin);
+
+            return this;
         }
 
-        public Task<IEnumerable<JToken>> GetListAsync()
+        public CensusJoin JoinService(string service)
         {
-            return GetListAsync<JToken>();
+            var newJoin = new CensusJoin(service);
+
+            if (Join == null)
+            {
+                Join = new List<CensusJoin>();
+            }
+
+            Join.Add(newJoin);
+            return newJoin;
         }
 
-        public Task<IEnumerable<JToken>> GetBatchAsync()
+        public CensusQuery TreeField(string field, Action<CensusTree> tree)
         {
-            return GetBatchAsync<JToken>();
+            var newTree = new CensusTree(field);
+            tree.Invoke(newTree);
+
+            if (Tree == null)
+            {
+                Tree = new List<CensusTree>();
+            }
+
+            Tree.Add(newTree);
+            return this;
+        }
+
+        public CensusTree TreeField(string field)
+        {
+            var newTree = new CensusTree(field);
+
+            if (Tree == null)
+            {
+                Tree = new List<CensusTree>();
+            }
+
+            Tree.Add(newTree);
+            return newTree;
+        }
+
+        public CensusQuery Where(string field, Action<CensusOperand> operand)
+        {
+            var newArg = new CensusArgument(field);
+
+            operand.Invoke(newArg.Operand);
+
+            if (Terms == null)
+            {
+                Terms = new List<CensusArgument>();
+            }
+
+            Terms.Add(newArg);
+            return this;
+        }
+
+        public CensusOperand Where(string field)
+        {
+            var newArg = new CensusArgument(field);
+
+            if (Terms == null)
+            {
+                Terms = new List<CensusArgument>();
+            }
+
+            Terms.Add(newArg);
+            return newArg.Operand;
+        }
+
+        public Task<JsonElement> GetAsync()
+        {
+            return GetAsync<JsonElement>();
+        }
+
+        public Task<IEnumerable<JsonElement>> GetListAsync()
+        {
+            return GetListAsync<JsonElement>();
+        }
+
+        public Task<IEnumerable<JsonElement>> GetBatchAsync()
+        {
+            return GetBatchAsync<JsonElement>();
         }
 
         public async Task<T> GetAsync<T>()
