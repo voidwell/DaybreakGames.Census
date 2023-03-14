@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace DaybreakGames.Census.Operators
 {
@@ -22,19 +23,37 @@ namespace DaybreakGames.Census.Operators
             Tree = new List<CensusTree>();
         }
 
-        public void IsList(bool isList)
+        public CensusTree IsList(bool isList)
         {
             List = isList;
+            return this;
         }
 
-        public void GroupPrefix(string prefix)
+        public CensusTree GroupPrefix(string prefix)
         {
             Prefix = prefix;
+            return this;
         }
 
-        public void StartField(string field)
+        public CensusTree StartField(string field)
         {
             Start = field;
+            return this;
+        }
+
+        public CensusTree TreeField(string field, Action<CensusTree> tree)
+        {
+            var newTree = new CensusTree(field);
+            tree.Invoke(newTree);
+
+            if (Tree == null)
+            {
+                Tree = new List<CensusTree>();
+            }
+            
+            Tree.Add(newTree);
+
+            return this;
         }
 
         public CensusTree TreeField(string field)

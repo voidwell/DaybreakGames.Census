@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace DaybreakGames.Census.Operators
@@ -39,39 +40,63 @@ namespace DaybreakGames.Census.Operators
             Service = service;
         }
 
-        public void IsList(bool isList)
+        public CensusJoin IsList(bool isList)
         {
             List = isList;
+            return this;
         }
 
-        public void IsOuterJoin(bool isOuter)
+        public CensusJoin IsOuterJoin(bool isOuter)
         {
             Outer = isOuter;
+            return this;
         }
 
-        public void ShowFields(params string[] fields)
+        public CensusJoin ShowFields(params string[] fields)
         {
             Show = fields;
+            return this;
         }
 
-        public void HideFields(params string[] fields)
+        public CensusJoin HideFields(params string[] fields)
         {
             Hide = fields;
+            return this;
         }
 
-        public void OnField(string field)
+        public CensusJoin OnField(string field)
         {
             On = field;
+            return this;
         }
 
-        public void ToField(string field)
+        public CensusJoin ToField(string field)
         {
             To = field;
+            return this;
         }
 
-        public void WithInjectAt(string field)
+        public CensusJoin WithInjectAt(string field)
         {
             InjectAt = field;
+            return this;
+        }
+
+        public CensusJoin Where(string field, Action<CensusOperand> operand)
+        {
+            var arg = new CensusArgument(field);
+            operand.Invoke(arg.Operand);
+
+            if (Terms == null)
+            {
+                Terms = new List<CensusArgument>();
+            }
+
+            var terms = Terms as List<CensusArgument>;
+            terms.Add(arg);
+            Terms = terms;
+
+            return this;
         }
 
         public CensusOperand Where(string field)
@@ -88,6 +113,15 @@ namespace DaybreakGames.Census.Operators
             Terms = terms;
 
             return arg.Operand;
+        }
+
+        public CensusJoin JoinService(string service, Action<CensusJoin> join)
+        {
+            var newJoin = new CensusJoin(service);
+            join.Invoke(newJoin);
+
+            Join.Add(newJoin);
+            return this;
         }
 
         public CensusJoin JoinService(string service)

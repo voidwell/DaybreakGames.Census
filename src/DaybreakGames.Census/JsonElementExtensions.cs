@@ -4,15 +4,20 @@ namespace DaybreakGames.Census
 {
     public static class JsonElementExtensions
     {
-        public static T GetPropertyValue<T>(this JsonElement element, string propertyName)
-            where T: class
+        public static JsonElement TryGetValue(this JsonElement json, string name)
         {
-            if (element.TryGetProperty(propertyName, out var value))
+            if (json.ValueKind == JsonValueKind.Undefined)
             {
-                return value.Deserialize<T>();
+                return default;
             }
 
-            return null;
+            return json.TryGetProperty(name, out JsonElement value) ? value : default;
+        }
+
+        public static string TryGetString(this JsonElement json, string name)
+        {
+            JsonElement value = json.TryGetValue(name);
+            return value.ValueKind == JsonValueKind.Undefined ? null : value.ToString();
         }
     }
 }

@@ -19,13 +19,13 @@ namespace DaybreakGames.Census.Operators
         private List<CensusArgument> Terms { get; set; }
 
         [UriQueryProperty]
-        public bool ExactMatchFirst { get; set; } = false;
+        public bool ExactMatchFirst { get; private set; } = false;
 
         [UriQueryProperty]
         private bool Timing { get; set; } = false;
 
         [UriQueryProperty]
-        private bool IncludeNull { get; set; } = false;
+        public bool IncludeNull { get; private set; } = false;
 
         [DefaultValue(true)]
         [UriQueryProperty]
@@ -182,6 +182,20 @@ namespace DaybreakGames.Census.Operators
         public CensusQuery SetLanguage(string language)
         {
             Language = language;
+
+            return this;
+        }
+
+        public CensusQuery UseExactMatchFirst()
+        {
+            ExactMatchFirst = true;
+
+            return this;
+        }
+
+        public CensusQuery UseIncludeNull()
+        {
+            IncludeNull = true;
 
             return this;
         }

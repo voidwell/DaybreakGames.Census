@@ -89,8 +89,8 @@ namespace DaybreakGames.Census
                     throw new CensusException("Failed to read JSON. Endpoint may be in maintence mode.", ex);
                 }
 
-                var error = jResult.GetPropertyValue<string>("error");
-                var errorCode = jResult.GetPropertyValue<string>("errorCode");
+                var error = jResult.TryGetString("error");
+                var errorCode = jResult.TryGetString("errorCode");
 
                 if (error != null)
                 {
@@ -105,7 +105,7 @@ namespace DaybreakGames.Census
                 }
                 else if (errorCode != null)
                 {
-                    var errorMessage = jResult.GetPropertyValue<string>("errorMessage");
+                    var errorMessage = jResult.TryGetString("errorMessage");
 
                     throw new CensusServerException($"{errorCode}: {errorMessage}");
                 }
