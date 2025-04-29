@@ -27,6 +27,10 @@ namespace DaybreakGames.Census
 
             _client = new HttpClient();
 
+            if (options.Value.UserAgent != null) {
+                _client.DefaultRequestHeaders.UserAgent.TryParseAdd(options.Value.UserAgent);
+            }
+
             _serializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = new UnderscorePropertyJsonNamingPolicy(),
@@ -167,7 +171,7 @@ namespace DaybreakGames.Census
             var ns = query.ServiceNamespace ?? _options.Value.CensusServiceNamespace;
 
             var encArgs = query.ToString();
-            return new Uri($"http://{endpoint}/s:{sId}/get/{ns}/{encArgs}");
+            return new Uri($"http{(_options.Value.UseHttps ? "s" : "")}://{endpoint}/s:{sId}/get/{ns}/{encArgs}");
         }
 
         private void HandleCensusExceptions(Exception ex, Uri query)
