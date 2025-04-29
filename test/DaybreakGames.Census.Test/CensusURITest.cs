@@ -364,12 +364,32 @@ namespace DaybreakGames.Census.Test
             Assert.AreEqual(expectedUri, censusUri);
         }
 
-        private CensusQueryFactory GetCensusQueryFactory()
+        [TestMethod]
+        public void Census_TestHttps()
+        {
+            var service = "character";
+            var ns = "ps2";
+            var key = "testkey";
+
+            var expectedUri = new Uri($"https://{Constants.CensusEndpoint}/s:{key}/get/{ns}/{service}/?c:hide=field1,field2,field3");
+
+            var query = GetCensusQueryFactory(useHttps: true).Create(service);
+
+            query.HideFields(new[] { "field1", "field2", "field3" });
+
+            var censusUri = query.GetUri();
+
+            Assert.AreEqual(expectedUri, censusUri);
+        }
+
+        private CensusQueryFactory GetCensusQueryFactory(bool useHttps = false)
         {
             var options = new CensusOptions
             {
                 CensusServiceId = "testkey",
-                CensusServiceNamespace = "ps2"
+                CensusServiceNamespace = "ps2",
+                UserAgent = "test",
+                UseHttps = useHttps
             };
 
             var censusClient = new CensusClient(Options.Create(options), null);
