@@ -382,6 +382,42 @@ namespace DaybreakGames.Census.Test
             Assert.AreEqual(expectedUri, censusUri);
         }
 
+        [TestMethod]
+        public void Census_UseExactMatchFirst()
+        {
+            var service = "character";
+            var ns = "ps2";
+            var key = "testkey";
+
+            var expectedUri = new Uri($"http://{Constants.CensusEndpoint}/s:{key}/get/{ns}/{service}/?c:exactMatchFirst=true");
+
+            var query = GetCensusQueryFactory().Create(service);
+
+            query.UseExactMatchFirst();
+
+            var censusUri = query.GetUri();
+
+            Assert.AreEqual(expectedUri, censusUri);
+        }
+
+        [TestMethod]
+        public void Census_LimitPerDB()
+        {
+            var service = "character";
+            var ns = "ps2";
+            var key = "testkey";
+
+            var expectedUri = new Uri($"http://{Constants.CensusEndpoint}/s:{key}/get/{ns}/{service}/?c:limitPerDB=20");
+
+            var query = GetCensusQueryFactory().Create(service);
+
+            query.SetLimitPerDB(20);
+
+            var censusUri = query.GetUri();
+
+            Assert.AreEqual(expectedUri, censusUri);
+        }
+
         private CensusQueryFactory GetCensusQueryFactory(bool useHttps = false)
         {
             var options = new CensusOptions

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace DaybreakGames.Census
 {
@@ -10,7 +11,7 @@ namespace DaybreakGames.Census
 
         public UriQueryPropertyAttribute([CallerMemberName] string name = null)
         {
-            Name = name.ToLower();
+            Name = JsonNamingPolicy.CamelCase.ConvertName(name);
         }
     }
 }

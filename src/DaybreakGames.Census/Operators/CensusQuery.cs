@@ -38,7 +38,7 @@ namespace DaybreakGames.Census.Operators
         [UriQueryProperty]
         public int? Limit { get; private set; } = null;
 
-        [UriQueryProperty("limitPerDB")]
+        [UriQueryProperty]
         private int? LimitPerDB { get; set; } = null;
 
         [UriQueryProperty]
@@ -129,6 +129,13 @@ namespace DaybreakGames.Census.Operators
         public CensusQuery SetLimit(int limit)
         {
             Limit = limit;
+
+            return this;
+        }
+
+        public CensusQuery SetLimitPerDB(int limit)
+        {
+            LimitPerDB = limit;
 
             return this;
         }
