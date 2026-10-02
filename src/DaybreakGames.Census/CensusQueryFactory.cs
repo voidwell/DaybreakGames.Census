@@ -1,19 +1,18 @@
 ﻿using DaybreakGames.Census.Operators;
 
-namespace DaybreakGames.Census
+namespace DaybreakGames.Census;
+
+public class CensusQueryFactory : ICensusQueryFactory
 {
-    public class CensusQueryFactory : ICensusQueryFactory
+    private readonly ICensusClient _censusClient;
+
+    public CensusQueryFactory(ICensusClient censusClient)
     {
-        private readonly ICensusClient _censusClient;
+        _censusClient = censusClient;
+    }
 
-        public CensusQueryFactory(ICensusClient censusClient)
-        {
-            _censusClient = censusClient;
-        }
-
-        public CensusQuery Create(string serviceName)
-        {
-            return new CensusQuery(_censusClient, serviceName);
-        }
+    public CensusQuery Create(string serviceName)
+    {
+        return new CensusQuery(_censusClient, serviceName);
     }
 }

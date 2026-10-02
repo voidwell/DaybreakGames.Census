@@ -1,104 +1,100 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace DaybreakGames.Census.Operators;
 
-namespace DaybreakGames.Census.Operators
+public sealed class CensusTree : CensusOperator
 {
-    public sealed class CensusTree : CensusOperator
+    private string TreeFieldName { get; set; }
+    private List<CensusTree> Tree { get; set; }
+
+    [UriQueryProperty]
+    private bool List { get; set; } = false;
+
+    [UriQueryProperty]
+    private string? Prefix { get; set; }
+
+    [UriQueryProperty]
+    private string? Start { get; set; }
+
+    public CensusTree(string treeField)
     {
-        private string TreeFieldName { get; set; }
-        private List<CensusTree> Tree { get; set; }
+        TreeFieldName = treeField;
+        Tree = new List<CensusTree>();
+    }
 
-        [UriQueryProperty]
-        private bool List { get; set; } = false;
+    public CensusTree IsList(bool isList)
+    {
+        List = isList;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private string Prefix { get; set; }
+    public CensusTree GroupPrefix(string prefix)
+    {
+        Prefix = prefix;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private string Start { get; set; }
+    public CensusTree StartField(string field)
+    {
+        Start = field;
+        return this;
+    }
 
-        public CensusTree(string treeField)
+    public CensusTree TreeField(string field, Action<CensusTree> tree)
+    {
+        var newTree = new CensusTree(field);
+        tree.Invoke(newTree);
+
+        if (Tree == null)
         {
-            TreeFieldName = treeField;
             Tree = new List<CensusTree>();
         }
 
-        public CensusTree IsList(bool isList)
+        Tree.Add(newTree);
+
+        return this;
+    }
+
+    public CensusTree TreeField(string field)
+    {
+        if (Tree == null)
         {
-            List = isList;
-            return this;
+            Tree = new List<CensusTree>();
         }
 
-        public CensusTree GroupPrefix(string prefix)
+        var newTree = new CensusTree(field);
+        Tree.Add(newTree);
+        return newTree;
+    }
+
+    public override string ToString()
+    {
+        var baseString = base.ToString();
+
+        if (baseString.Length > 0)
         {
-            Prefix = prefix;
-            return this;
+            baseString = $"^{baseString}";
         }
 
-        public CensusTree StartField(string field)
+        var subJoinString = "";
+        foreach (var subTree in Tree)
         {
-            Start = field;
-            return this;
+            subJoinString += $"({subTree.ToString()})";
         }
 
-        public CensusTree TreeField(string field, Action<CensusTree> tree)
-        {
-            var newTree = new CensusTree(field);
-            tree.Invoke(newTree);
+        return $"{TreeFieldName}{baseString}{subJoinString}";
+    }
 
-            if (Tree == null)
-            {
-                Tree = new List<CensusTree>();
-            }
-            
-            Tree.Add(newTree);
+    public override string GetKeyValueStringFormat()
+    {
+        return "{0}:{1}";
+    }
 
-            return this;
-        }
+    public override string GetPropertySpacer()
+    {
+        return "^";
+    }
 
-        public CensusTree TreeField(string field)
-        {
-            if (Tree == null)
-            {
-                Tree = new List<CensusTree>();
-            }
-
-            var newTree = new CensusTree(field);
-            Tree.Add(newTree);
-            return newTree;
-        }
-
-        public override string ToString()
-        {
-            var baseString = base.ToString();
-
-            if (baseString.Length > 0)
-            {
-                baseString = $"^{baseString}";
-            }
-
-            var subJoinString = "";
-            foreach (var subTree in Tree)
-            {
-                subJoinString += $"({subTree.ToString()})";
-            }
-
-            return $"{TreeFieldName}{baseString}{subJoinString}";
-        }
-
-        public override string GetKeyValueStringFormat()
-        {
-            return "{0}:{1}";
-        }
-
-        public override string GetPropertySpacer()
-        {
-            return "^";
-        }
-
-        public override string GetTermSpacer()
-        {
-            return "'";
-        }
+    public override string GetTermSpacer()
+    {
+        return "'";
     }
 }

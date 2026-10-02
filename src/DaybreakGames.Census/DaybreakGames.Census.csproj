@@ -1,18 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-  </PropertyGroup>
-    
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0</Version>
     <Description>
 This is an UNOFFICIAL package and is in no way associated or supported by Daybreak Games Company.
 Please see the project page for documentation.
     </Description>
-    <Copyright>Copyright 2023 - Jess Tremper</Copyright>
+    <Copyright>Copyright 2026 - Jess Wake</Copyright>
     <Authors>VoidwellLabs</Authors>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>DaybreakGames.Census</AssemblyName>
     <PackageId>DaybreakGames.Census</PackageId>
     <PackageTags>daybreakgames;daybreak-games;daybreak-games-company;census;planetside;planetside2;planetside-2;voidwell</PackageTags>
@@ -25,11 +19,10 @@ Please see the project page for documentation.
   </PropertyGroup>
     
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0" />
-    <PackageReference Include="System.Net.WebSockets.Client" Version="4.3.2" />
-    <PackageReference Include="Websocket.Client" Version="4.6.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Websocket.Client" />
   </ItemGroup>
 
 </Project>

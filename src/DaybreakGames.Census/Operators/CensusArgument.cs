@@ -1,20 +1,19 @@
-﻿namespace DaybreakGames.Census.Operators
+﻿namespace DaybreakGames.Census.Operators;
+
+public sealed class CensusArgument
 {
-    public sealed class CensusArgument
+    public CensusOperand Operand { get; set; }
+
+    private string _field { get; set; }
+
+    public CensusArgument(string field)
     {
-        public CensusOperand Operand { get; set; }
+        _field = field;
+        Operand = new CensusOperand();
+    }
 
-        private string _field { get; set; }
-
-        public CensusArgument(string field)
-        {
-            _field = field;
-            Operand = new CensusOperand();
-        }
-
-        public override string ToString()
-        {
-            return $"{_field}{Operand}";
-        }
+    public override string ToString()
+    {
+        return $"{_field}{Operand}";
     }
 }

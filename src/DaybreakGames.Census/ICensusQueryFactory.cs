@@ -1,9 +1,8 @@
 ﻿using DaybreakGames.Census.Operators;
 
-namespace DaybreakGames.Census
+namespace DaybreakGames.Census;
+
+public interface ICensusQueryFactory
 {
-    public interface ICensusQueryFactory
-    {
-        CensusQuery Create(string serviceName);
-    }
+    CensusQuery Create(string serviceName);
 }

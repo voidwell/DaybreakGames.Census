@@ -1,12 +1,11 @@
-﻿namespace DaybreakGames.Census.Operators
+﻿namespace DaybreakGames.Census.Operators;
+
+public enum CensusLanguage
 {
-    public enum CensusLanguage
-    {
-        English,
-        German,
-        Spanish,
-        French,
-        Italian,
-        Turkish
-    }
+    English,
+    German,
+    Spanish,
+    French,
+    Italian,
+    Turkish
 }

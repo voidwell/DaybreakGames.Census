@@ -1,13 +1,12 @@
-﻿namespace DaybreakGames.Census.Exceptions
-{
-    public class CensusServiceUnavailableException : CensusServerException
-    {
-        public CensusServiceUnavailableException() : base()
-        {
-        }
+﻿namespace DaybreakGames.Census.Exceptions;
 
-        public CensusServiceUnavailableException(string message) : base(message)
-        {
-        }
+public class CensusServiceUnavailableException : CensusServerException
+{
+    public CensusServiceUnavailableException() : base()
+    {
+    }
+
+    public CensusServiceUnavailableException(string message) : base(message)
+    {
     }
 }

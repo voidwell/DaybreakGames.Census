@@ -1,369 +1,343 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
-namespace DaybreakGames.Census.Operators
+namespace DaybreakGames.Census.Operators;
+
+public sealed class CensusQuery : CensusOperator
 {
-    public sealed class CensusQuery : CensusOperator
+    private readonly ICensusClient _censusClient;
+
+    public string ServiceName { get; private set; }
+
+    public string? ServiceId { get; private set; }
+    public string? ServiceNamespace { get; private set; }
+
+    private List<CensusArgument>? Terms { get; set; }
+
+    [UriQueryProperty]
+    public bool ExactMatchFirst { get; private set; } = false;
+
+    [UriQueryProperty]
+    public bool IncludeNull { get; private set; } = false;
+
+    [UriQueryProperty]
+    public int? Limit { get; private set; } = null;
+
+    [UriQueryProperty]
+    private int? LimitPerDB { get; set; } = null;
+
+    [UriQueryProperty]
+    public int? Start { get; private set; }
+
+    [UriQueryProperty]
+    private List<string>? Show { get; set; }
+
+    [UriQueryProperty]
+    private List<string>? Hide { get; set; }
+
+    [UriQueryProperty]
+    private List<string>? Resolve { get; set; }
+
+    [UriQueryProperty]
+    private List<CensusJoin>? Join { get; set; }
+
+    [UriQueryProperty]
+    private List<CensusTree>? Tree { get; set; }
+
+    [UriQueryProperty("lang")]
+    public string? Language { get; private set; }
+
+    public CensusQuery(ICensusClient censusClient, string serviceName)
     {
-        private readonly ICensusClient _censusClient;
+        _censusClient = censusClient;
 
-        public string ServiceName { get; private set; }
+        ServiceName = serviceName;
+    }
 
-        public string ServiceId { get; private set; }
-        public string ServiceNamespace { get; private set; }
-
-        private List<CensusArgument> Terms { get; set; }
-
-        [UriQueryProperty]
-        public bool ExactMatchFirst { get; private set; } = false;
-
-        [UriQueryProperty]
-        private bool Timing { get; set; } = false;
-
-        [UriQueryProperty]
-        public bool IncludeNull { get; private set; } = false;
-
-        [DefaultValue(true)]
-        [UriQueryProperty]
-        private bool Case { get; set; } = true;
-
-        [DefaultValue(true)]
-        [UriQueryProperty]
-        private bool Retry { get; set; } = true;
-
-        [UriQueryProperty]
-        public int? Limit { get; private set; } = null;
-
-        [UriQueryProperty]
-        private int? LimitPerDB { get; set; } = null;
-
-        [UriQueryProperty]
-        public int? Start { get; private set; }
-
-        [UriQueryProperty]
-        private List<string> Show { get; set; }
-
-        [UriQueryProperty]
-        private List<string> Hide { get; set; }
-
-        [UriQueryProperty]
-        private List<string> Sort { get; set; }
-
-        [UriQueryProperty]
-        private List<string> Has { get; set; }
-
-        [UriQueryProperty]
-        private List<string> Resolve { get; set; }
-
-        [UriQueryProperty]
-        private List<CensusJoin> Join { get; set; }
-
-        [UriQueryProperty]
-        private List<CensusTree> Tree { get; set; }
-
-        [UriQueryProperty]
-        private string Distinct { get; set; }
-
-        [UriQueryProperty("lang")]
-        public string Language { get; private set; }
-
-        public CensusQuery(ICensusClient censusClient, string serviceName)
+    public CensusQuery SetServiceId(string serviceId)
+    {
+        if (string.IsNullOrWhiteSpace(serviceId))
         {
-            _censusClient = censusClient;
-
-            ServiceName = serviceName;
+            throw new ArgumentNullException(nameof(serviceId));
         }
 
-        public CensusQuery SetServiceId(string serviceId)
+        ServiceId = serviceId;
+
+        return this;
+    }
+
+    public CensusQuery SetServiceNamespace(string serviceNamespace)
+    {
+        if (string.IsNullOrWhiteSpace(serviceNamespace))
         {
-            if (string.IsNullOrWhiteSpace(serviceId))
+            throw new ArgumentNullException(nameof(serviceNamespace));
+        }
+
+        ServiceNamespace = serviceNamespace;
+
+        return this;
+    }
+
+    public CensusQuery ShowFields(params string[] fields)
+    {
+        if (Show == null)
+        {
+            Show = new List<string>();
+        }
+
+        Show.AddRange(fields);
+
+        return this;
+    }
+
+    public CensusQuery HideFields(params string[] fields)
+    {
+        if (Hide == null)
+        {
+            Hide = new List<string>();
+        }
+
+        Hide.AddRange(fields);
+
+        return this;
+    }
+
+    public CensusQuery SetLimit(int limit)
+    {
+        Limit = limit;
+
+        return this;
+    }
+
+    public CensusQuery SetLimitPerDB(int limit)
+    {
+        LimitPerDB = limit;
+
+        return this;
+    }
+
+    public CensusQuery SetStart(int start)
+    {
+        Start = start;
+
+        return this;
+    }
+
+    public CensusQuery AddResolve(params string[] resolves)
+    {
+        if (Resolve == null)
+        {
+            Resolve = new List<string>();
+        }
+
+        Resolve.AddRange(resolves);
+
+        return this;
+    }
+
+    public CensusQuery SetLanguage(CensusLanguage language)
+    {
+        switch (language)
+        {
+            case CensusLanguage.English:
+                SetLanguage("en");
+                break;
+            case CensusLanguage.German:
+                SetLanguage("de");
+                break;
+            case CensusLanguage.Spanish:
+                SetLanguage("es");
+                break;
+            case CensusLanguage.French:
+                SetLanguage("fr");
+                break;
+            case CensusLanguage.Italian:
+                SetLanguage("it");
+                break;
+            case CensusLanguage.Turkish:
+                SetLanguage("tr");
+                break;
+        }
+
+        return this;
+    }
+
+    public CensusQuery SetLanguage(string language)
+    {
+        Language = language;
+
+        return this;
+    }
+
+    public CensusQuery UseExactMatchFirst()
+    {
+        ExactMatchFirst = true;
+
+        return this;
+    }
+
+    public CensusQuery UseIncludeNull()
+    {
+        IncludeNull = true;
+
+        return this;
+    }
+
+    public CensusQuery JoinService(string service, Action<CensusJoin> join)
+    {
+        var newJoin = new CensusJoin(service);
+        join.Invoke(newJoin);
+
+        if (Join == null)
+        {
+            Join = new List<CensusJoin>();
+        }
+
+        Join.Add(newJoin);
+
+        return this;
+    }
+
+    public CensusJoin JoinService(string service)
+    {
+        var newJoin = new CensusJoin(service);
+
+        if (Join == null)
+        {
+            Join = new List<CensusJoin>();
+        }
+
+        Join.Add(newJoin);
+        return newJoin;
+    }
+
+    public CensusQuery TreeField(string field, Action<CensusTree> tree)
+    {
+        var newTree = new CensusTree(field);
+        tree.Invoke(newTree);
+
+        if (Tree == null)
+        {
+            Tree = new List<CensusTree>();
+        }
+
+        Tree.Add(newTree);
+        return this;
+    }
+
+    public CensusTree TreeField(string field)
+    {
+        var newTree = new CensusTree(field);
+
+        if (Tree == null)
+        {
+            Tree = new List<CensusTree>();
+        }
+
+        Tree.Add(newTree);
+        return newTree;
+    }
+
+    public CensusQuery Where(string field, Action<CensusOperand> operand)
+    {
+        var newArg = new CensusArgument(field);
+
+        operand.Invoke(newArg.Operand);
+
+        if (Terms == null)
+        {
+            Terms = new List<CensusArgument>();
+        }
+
+        Terms.Add(newArg);
+        return this;
+    }
+
+    public CensusOperand Where(string field)
+    {
+        var newArg = new CensusArgument(field);
+
+        if (Terms == null)
+        {
+            Terms = new List<CensusArgument>();
+        }
+
+        Terms.Add(newArg);
+        return newArg.Operand;
+    }
+
+    public Task<JsonElement> GetAsync()
+    {
+        return GetAsync<JsonElement>();
+    }
+
+    public Task<IEnumerable<JsonElement>> GetListAsync()
+    {
+        return GetListAsync<JsonElement>();
+    }
+
+    public Task<IEnumerable<JsonElement>> GetBatchAsync()
+    {
+        return GetBatchAsync<JsonElement>();
+    }
+
+    public async Task<T?> GetAsync<T>()
+    {
+        var result = await GetListAsync<T>();
+        return result == null ? default(T) : result.FirstOrDefault();
+    }
+
+    public Task<IEnumerable<T>> GetListAsync<T>()
+    {
+        return _censusClient.ExecuteQuery<IEnumerable<T>>(this);
+    }
+
+    public Task<IEnumerable<T>> GetBatchAsync<T>()
+    {
+        return _censusClient.ExecuteQueryBatch<T>(this);
+    }
+
+    public Uri GetUri()
+    {
+        return _censusClient.CreateRequestUri(this);
+    }
+
+    public override string ToString()
+    {
+        var baseString = base.ToString();
+
+        var terms = Terms?.Select(t => t.ToString()).ToList() ?? new List<string>();
+        var stringTerms = string.Join(GetPropertySpacer(), terms);
+
+
+        if (!string.IsNullOrEmpty(baseString))
+        {
+            baseString = $"?{baseString}";
+
+            if (!string.IsNullOrEmpty(stringTerms))
             {
-                throw new ArgumentNullException(nameof(serviceId));
+                stringTerms = $"&{stringTerms}";
             }
-
-            ServiceId = serviceId;
-
-            return this;
         }
-
-        public CensusQuery SetServiceNamespace(string serviceNamespace)
+        else if (!string.IsNullOrEmpty(stringTerms))
         {
-            if (string.IsNullOrWhiteSpace(serviceNamespace))
-            {
-                throw new ArgumentNullException(nameof(serviceNamespace));
-            }
-
-            ServiceNamespace = serviceNamespace;
-
-            return this;
+            stringTerms = $"?{stringTerms}";
         }
 
-        public CensusQuery ShowFields(params string[] fields)
-        {
-            if (Show == null)
-            {
-                Show = new List<string>();
-            }
+        return $"{ServiceName}/{baseString}{stringTerms}";
+    }
 
-            Show.AddRange(fields);
+    public override string GetKeyValueStringFormat()
+    {
+        return "c:{0}={1}";
+    }
 
-            return this;
-        }
+    public override string GetPropertySpacer()
+    {
+        return "&";
+    }
 
-        public CensusQuery HideFields(params string[] fields)
-        {
-            if (Hide == null)
-            {
-                Hide = new List<string>();
-            }
-
-            Hide.AddRange(fields);
-
-            return this;
-        }
-
-        public CensusQuery SetLimit(int limit)
-        {
-            Limit = limit;
-
-            return this;
-        }
-
-        public CensusQuery SetLimitPerDB(int limit)
-        {
-            LimitPerDB = limit;
-
-            return this;
-        }
-
-        public CensusQuery SetStart(int start)
-        {
-            Start = start;
-
-            return this;
-        }
-
-        public CensusQuery AddResolve(params string[] resolves)
-        {
-            if (Resolve == null)
-            {
-                Resolve = new List<string>();
-            }
-
-            Resolve.AddRange(resolves);
-
-            return this;
-        }
-
-        public CensusQuery SetLanguage(CensusLanguage language)
-        {
-            switch(language)
-            {
-                case CensusLanguage.English:
-                    SetLanguage("en");
-                    break;
-                case CensusLanguage.German:
-                    SetLanguage("de");
-                    break;
-                case CensusLanguage.Spanish:
-                    SetLanguage("es");
-                    break;
-                case CensusLanguage.French:
-                    SetLanguage("fr");
-                    break;
-                case CensusLanguage.Italian:
-                    SetLanguage("it");
-                    break;
-                case CensusLanguage.Turkish:
-                    SetLanguage("tr");
-                    break;
-            }
-
-            return this;
-        }
-
-        public CensusQuery SetLanguage(string language)
-        {
-            Language = language;
-
-            return this;
-        }
-
-        public CensusQuery UseExactMatchFirst()
-        {
-            ExactMatchFirst = true;
-
-            return this;
-        }
-
-        public CensusQuery UseIncludeNull()
-        {
-            IncludeNull = true;
-
-            return this;
-        }
-
-        public CensusQuery JoinService(string service, Action<CensusJoin> join)
-        {
-            var newJoin = new CensusJoin(service);
-            join.Invoke(newJoin);
-
-            if (Join == null)
-            {
-                Join = new List<CensusJoin>();
-            }
-
-            Join.Add(newJoin);
-
-            return this;
-        }
-
-        public CensusJoin JoinService(string service)
-        {
-            var newJoin = new CensusJoin(service);
-
-            if (Join == null)
-            {
-                Join = new List<CensusJoin>();
-            }
-
-            Join.Add(newJoin);
-            return newJoin;
-        }
-
-        public CensusQuery TreeField(string field, Action<CensusTree> tree)
-        {
-            var newTree = new CensusTree(field);
-            tree.Invoke(newTree);
-
-            if (Tree == null)
-            {
-                Tree = new List<CensusTree>();
-            }
-
-            Tree.Add(newTree);
-            return this;
-        }
-
-        public CensusTree TreeField(string field)
-        {
-            var newTree = new CensusTree(field);
-
-            if (Tree == null)
-            {
-                Tree = new List<CensusTree>();
-            }
-
-            Tree.Add(newTree);
-            return newTree;
-        }
-
-        public CensusQuery Where(string field, Action<CensusOperand> operand)
-        {
-            var newArg = new CensusArgument(field);
-
-            operand.Invoke(newArg.Operand);
-
-            if (Terms == null)
-            {
-                Terms = new List<CensusArgument>();
-            }
-
-            Terms.Add(newArg);
-            return this;
-        }
-
-        public CensusOperand Where(string field)
-        {
-            var newArg = new CensusArgument(field);
-
-            if (Terms == null)
-            {
-                Terms = new List<CensusArgument>();
-            }
-
-            Terms.Add(newArg);
-            return newArg.Operand;
-        }
-
-        public Task<JsonElement> GetAsync()
-        {
-            return GetAsync<JsonElement>();
-        }
-
-        public Task<IEnumerable<JsonElement>> GetListAsync()
-        {
-            return GetListAsync<JsonElement>();
-        }
-
-        public Task<IEnumerable<JsonElement>> GetBatchAsync()
-        {
-            return GetBatchAsync<JsonElement>();
-        }
-
-        public async Task<T> GetAsync<T>()
-        {
-            var result = await GetListAsync<T>();
-            return result == null ? default(T) : result.FirstOrDefault();
-        }
-
-        public Task<IEnumerable<T>> GetListAsync<T>()
-        {
-            return _censusClient.ExecuteQuery<IEnumerable<T>>(this);
-        }
-
-        public Task<IEnumerable<T>> GetBatchAsync<T>()
-        {
-            return _censusClient.ExecuteQueryBatch<T>(this);
-        }
-
-        public Uri GetUri()
-        {
-            return _censusClient.CreateRequestUri(this);
-        }
-
-        public override string ToString()
-        {
-            var baseString = base.ToString();
-
-            var terms = Terms?.Select(t => t.ToString()).ToList() ?? new List<string>();
-            var stringTerms = string.Join(GetPropertySpacer(), terms);
-
-
-            if (!string.IsNullOrEmpty(baseString))
-            {
-                baseString = $"?{baseString}";
-
-                if (!string.IsNullOrEmpty(stringTerms))
-                {
-                    stringTerms = $"&{stringTerms}";
-                }
-            }
-            else if (!string.IsNullOrEmpty(stringTerms))
-            {
-                stringTerms = $"?{stringTerms}";
-            }
-
-            return $"{ServiceName}/{baseString}{stringTerms}";
-        }
-
-        public override string GetKeyValueStringFormat()
-        {
-            return "c:{0}={1}";
-        }
-
-        public override string GetPropertySpacer()
-        {
-            return "&";
-        }
-
-        public override string GetTermSpacer()
-        {
-            return ",";
-        }
+    public override string GetTermSpacer()
+    {
+        return ",";
     }
 }

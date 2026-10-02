@@ -1,167 +1,164 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
-namespace DaybreakGames.Census.Operators
+namespace DaybreakGames.Census.Operators;
+
+public sealed class CensusJoin : CensusOperator
 {
-    public sealed class CensusJoin : CensusOperator
+    [UriQueryProperty]
+    private bool List { get; set; } = false;
+
+    [DefaultValue(true)]
+    [UriQueryProperty]
+    private bool Outer { get; set; } = true;
+
+    [UriQueryProperty]
+    private IEnumerable<string>? Show { get; set; }
+
+    [UriQueryProperty]
+    private IEnumerable<string>? Hide { get; set; }
+
+    [UriQueryProperty]
+    private IEnumerable<CensusArgument>? Terms { get; set; }
+
+    [UriQueryProperty]
+    private string? On { get; set; }
+
+    [UriQueryProperty]
+    private string? To { get; set; }
+
+    [UriQueryProperty("inject_at")]
+    private string? InjectAt { get; set; }
+
+    private List<CensusJoin> Join { get; set; } = new List<CensusJoin>();
+
+    private string Service;
+
+    public CensusJoin(string service)
     {
-        [UriQueryProperty]
-        private bool List { get; set; } = false;
+        Service = service;
+    }
 
-        [DefaultValue(true)]
-        [UriQueryProperty]
-        private bool Outer { get; set; } = true;
+    public CensusJoin IsList(bool isList)
+    {
+        List = isList;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private IEnumerable<string> Show { get; set; }
+    public CensusJoin IsOuterJoin(bool isOuter)
+    {
+        Outer = isOuter;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private IEnumerable<string> Hide { get; set; }
+    public CensusJoin ShowFields(params string[] fields)
+    {
+        Show = fields;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private IEnumerable<CensusArgument> Terms { get; set; }
+    public CensusJoin HideFields(params string[] fields)
+    {
+        Hide = fields;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private string On { get; set; }
+    public CensusJoin OnField(string field)
+    {
+        On = field;
+        return this;
+    }
 
-        [UriQueryProperty]
-        private string To { get; set; }
+    public CensusJoin ToField(string field)
+    {
+        To = field;
+        return this;
+    }
 
-        [UriQueryProperty("inject_at")]
-        private string InjectAt { get; set; }
+    public CensusJoin WithInjectAt(string field)
+    {
+        InjectAt = field;
+        return this;
+    }
 
-        private List<CensusJoin> Join { get; set; } = new List<CensusJoin>();
+    public CensusJoin Where(string field, Action<CensusOperand> operand)
+    {
+        var arg = new CensusArgument(field);
+        operand.Invoke(arg.Operand);
 
-        private string Service;
-
-        public CensusJoin(string service)
+        if (Terms == null)
         {
-            Service = service;
+            Terms = new List<CensusArgument>();
         }
 
-        public CensusJoin IsList(bool isList)
+        var terms = (Terms as List<CensusArgument>)!;
+        terms.Add(arg);
+        Terms = terms;
+
+        return this;
+    }
+
+    public CensusOperand Where(string field)
+    {
+        var arg = new CensusArgument(field);
+
+        if (Terms == null)
         {
-            List = isList;
-            return this;
+            Terms = new List<CensusArgument>();
         }
 
-        public CensusJoin IsOuterJoin(bool isOuter)
+        var terms = (Terms as List<CensusArgument>)!;
+        terms.Add(arg);
+        Terms = terms;
+
+        return arg.Operand;
+    }
+
+    public CensusJoin JoinService(string service, Action<CensusJoin> join)
+    {
+        var newJoin = new CensusJoin(service);
+        join.Invoke(newJoin);
+
+        Join.Add(newJoin);
+        return this;
+    }
+
+    public CensusJoin JoinService(string service)
+    {
+        var newJoin = new CensusJoin(service);
+        Join.Add(newJoin);
+        return newJoin;
+    }
+
+    public override string ToString()
+    {
+        var baseString = base.ToString();
+
+        if (baseString.Length > 0)
         {
-            Outer = isOuter;
-            return this;
+            baseString = $"^{baseString}";
         }
 
-        public CensusJoin ShowFields(params string[] fields)
+        var subJoinString = "";
+        foreach (var subJoin in Join)
         {
-            Show = fields;
-            return this;
+            subJoinString += $"({subJoin.ToString()})";
         }
 
-        public CensusJoin HideFields(params string[] fields)
-        {
-            Hide = fields;
-            return this;
-        }
+        return $"{Service}{baseString}{subJoinString}";
+    }
 
-        public CensusJoin OnField(string field)
-        {
-            On = field;
-            return this;
-        }
+    public override string GetKeyValueStringFormat()
+    {
+        return "{0}:{1}";
+    }
 
-        public CensusJoin ToField(string field)
-        {
-            To = field;
-            return this;
-        }
+    public override string GetPropertySpacer()
+    {
+        return "^";
+    }
 
-        public CensusJoin WithInjectAt(string field)
-        {
-            InjectAt = field;
-            return this;
-        }
-
-        public CensusJoin Where(string field, Action<CensusOperand> operand)
-        {
-            var arg = new CensusArgument(field);
-            operand.Invoke(arg.Operand);
-
-            if (Terms == null)
-            {
-                Terms = new List<CensusArgument>();
-            }
-
-            var terms = Terms as List<CensusArgument>;
-            terms.Add(arg);
-            Terms = terms;
-
-            return this;
-        }
-
-        public CensusOperand Where(string field)
-        {
-            var arg = new CensusArgument(field);
-
-            if (Terms == null)
-            {
-                Terms = new List<CensusArgument>();
-            }
-
-            var terms = Terms as List<CensusArgument>;
-            terms.Add(arg);
-            Terms = terms;
-
-            return arg.Operand;
-        }
-
-        public CensusJoin JoinService(string service, Action<CensusJoin> join)
-        {
-            var newJoin = new CensusJoin(service);
-            join.Invoke(newJoin);
-
-            Join.Add(newJoin);
-            return this;
-        }
-
-        public CensusJoin JoinService(string service)
-        {
-            var newJoin = new CensusJoin(service);
-            Join.Add(newJoin);
-            return newJoin;
-        }
-
-        public override string ToString()
-        {
-            var baseString = base.ToString();
-
-            if (baseString.Length > 0)
-            {
-                baseString = $"^{baseString}";
-            }
-
-            var subJoinString = "";
-            foreach (var subJoin in Join)
-            {
-                subJoinString += $"({subJoin.ToString()})";
-            }
-
-            return $"{Service}{baseString}{subJoinString}";
-        }
-
-        public override string GetKeyValueStringFormat()
-        {
-            return "{0}:{1}";
-        }
-
-        public override string GetPropertySpacer()
-        {
-            return "^";
-        }
-
-        public override string GetTermSpacer()
-        {
-            return "'";
-        }
+    public override string GetTermSpacer()
+    {
+        return "'";
     }
 }

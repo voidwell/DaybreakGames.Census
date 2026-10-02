@@ -1,177 +1,174 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
-using System.Net.WebSockets;
+﻿using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Websocket.Client;
 
-namespace DaybreakGames.Census.Stream
-{
-    public class CensusStreamClient : ICensusStreamClient
-    {
-        private readonly IOptions<CensusOptions> _options;
-        private readonly ILogger<CensusStreamClient> _logger;
+namespace DaybreakGames.Census.Stream;
 
-        private static readonly Func<ClientWebSocket> wsFactory = new Func<ClientWebSocket>(() =>
+public class CensusStreamClient : ICensusStreamClient
+{
+    private readonly IOptions<CensusOptions> _options;
+    private readonly ILogger<CensusStreamClient> _logger;
+
+    private static readonly Func<ClientWebSocket> wsFactory = new Func<ClientWebSocket>(() =>
+    {
+        return new ClientWebSocket { Options = { KeepAliveInterval = TimeSpan.FromSeconds(5) } };
+    });
+    private static readonly JsonSerializerOptions sendMessageSettings = new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private string? _serviceId { get; set; }
+    private string? _serviceNamespace { get; set; }
+    private string? _endpoint { get; set; }
+
+    public CensusStreamClient(IOptions<CensusOptions> options, ILogger<CensusStreamClient> logger)
+    {
+        _options = options;
+        _logger = logger;
+    }
+
+    private Func<string, Task>? _onMessage;
+    private Func<DisconnectionInfo, Task>? _onDisconnected;
+    private Func<ReconnectionType, Task>? _onConnect;
+
+    private IWebsocketClient? _client;
+
+    public CensusStreamClient OnConnect(Func<ReconnectionType, Task> onConnect)
+    {
+        _onConnect = onConnect;
+        return this;
+    }
+
+    public CensusStreamClient OnDisconnect(Func<DisconnectionInfo, Task> onDisconnect)
+    {
+        _onDisconnected = onDisconnect;
+        return this;
+    }
+
+    public CensusStreamClient OnMessage(Func<string, Task> onMessage)
+    {
+        _onMessage = onMessage;
+        return this;
+    }
+
+    public async Task ConnectAsync()
+    {
+        _client = new WebsocketClient(GetEndpoint(), wsFactory)
         {
-            return new ClientWebSocket { Options = { KeepAliveInterval = TimeSpan.FromSeconds(5) } };
-        });
-        private static readonly JsonSerializerOptions sendMessageSettings = new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            ReconnectTimeout = TimeSpan.FromSeconds(35),
+            ErrorReconnectTimeout = TimeSpan.FromSeconds(30)
         };
 
-        private string _serviceId { get; set; }
-        private string _serviceNamespace { get; set; }
-        private string _endpoint { get; set; }
-
-        public CensusStreamClient(IOptions<CensusOptions> options, ILogger<CensusStreamClient> logger)
+        _client.DisconnectionHappened.Subscribe(info =>
         {
-            _options = options;
-            _logger = logger;
-        }
+            _logger.LogWarning(75421, $"Stream disconnected: {info.Type}: {info.Exception}");
 
-        private Func<string, Task> _onMessage;
-        private Func<DisconnectionInfo, Task> _onDisconnected;
-        private Func<ReconnectionType, Task> _onConnect;
-
-        private IWebsocketClient _client;
-
-        public CensusStreamClient OnConnect(Func<ReconnectionType, Task> onConnect)
-        {
-            _onConnect = onConnect;
-            return this;
-        }
-
-        public CensusStreamClient OnDisconnect(Func<DisconnectionInfo, Task> onDisconnect)
-        {
-            _onDisconnected = onDisconnect;
-            return this;
-        }
-
-        public CensusStreamClient OnMessage(Func<string, Task> onMessage)
-        {
-            _onMessage = onMessage;
-            return this;
-        }
-
-        public async Task ConnectAsync()
-        {
-            _client = new WebsocketClient(GetEndpoint(), wsFactory)
+            if (_onDisconnected != null)
             {
-                ReconnectTimeout = TimeSpan.FromSeconds(35),
-                ErrorReconnectTimeout = TimeSpan.FromSeconds(30)
-            };
+                Task.Run(() => _onDisconnected(info));
+            }
+        });
 
-            _client.DisconnectionHappened.Subscribe(info =>
+        _client.ReconnectionHappened.Subscribe(info =>
+        {
+            if (info.Type == ReconnectionType.Initial)
             {
-                _logger.LogWarning(75421, $"Stream disconnected: {info.Type}: {info.Exception}");
-
-                if (_onDisconnected != null)
-                {
-                    Task.Run(() => _onDisconnected(info));
-                }
-            });
-
-            _client.ReconnectionHappened.Subscribe(info =>
+                _logger.LogInformation("Starting initial census stream connect");
+            }
+            else
             {
-                if (info.Type == ReconnectionType.Initial)
-                {
-                    _logger.LogInformation("Starting initial census stream connect");
-                }
-                else
-                {
-                    _logger.LogInformation($"Stream reconnection occured: {info.Type}");
-                }
-
-                if (_onConnect != null)
-                {
-                    Task.Run(() => _onConnect(info.Type));
-                }
-            });
-
-            _client.MessageReceived.Subscribe(msg =>
-            {
-                if (_onMessage != null)
-                {
-                    Task.Run(() => _onMessage(msg.Text));
-                }
-            });
-
-            await _client.Start();
-        }
-
-        public void Subscribe(CensusStreamSubscription subscription)
-        {
-            var sMessage = JsonSerializer.Serialize(subscription, sendMessageSettings);
-
-            _logger.LogInformation($"Subscribing to census with: {sMessage}");
-
-            _client.Send(sMessage);
-        }
-
-        public Task DisconnectAsync()
-        {
-            _client?.Dispose();
-            return Task.CompletedTask;
-        }
-
-        public Task ReconnectAsync()
-        {
-            return _client?.Reconnect();
-        }
-
-        private Uri GetEndpoint()
-        {
-            var ns = _serviceNamespace ?? _options.Value.CensusServiceNamespace ?? Constants.DefaultServiceNamespace;
-            var sId = _serviceId ?? _options.Value.CensusServiceId ?? Constants.DefaultServiceId;
-            var endpoint = _endpoint ?? _options.Value.CensusWebsocketEndpoint ?? Constants.CensusWebsocketEndpoint;
-
-            return new Uri($"{endpoint}?environment={ns}&service-id=s:{sId}");
-        }
-
-        public CensusStreamClient SetServiceId(string serviceId)
-        {
-            if (string.IsNullOrWhiteSpace(serviceId))
-            {
-                throw new ArgumentNullException(nameof(serviceId));
+                _logger.LogInformation($"Stream reconnection occured: {info.Type}");
             }
 
-            _serviceId = serviceId;
-
-            return this;
-        }
-
-        public CensusStreamClient SetServiceNamespace(string serviceNamespace)
-        {
-            if (string.IsNullOrWhiteSpace(serviceNamespace))
+            if (_onConnect != null)
             {
-                throw new ArgumentNullException(nameof(serviceNamespace));
+                Task.Run(() => _onConnect(info.Type));
             }
+        });
 
-            _serviceNamespace = serviceNamespace;
-
-            return this;
-        }
-
-        public CensusStreamClient SetEndpoint(string endpoint)
+        _client.MessageReceived.Subscribe(msg =>
         {
-            if (string.IsNullOrWhiteSpace(endpoint))
+            if (_onMessage != null)
             {
-                throw new ArgumentNullException(nameof(endpoint));
+                Task.Run(() => _onMessage(msg.Text!));
             }
+        });
 
-            _endpoint = endpoint;
+        await _client.Start();
+    }
 
-            return this;
-        }
+    public void Subscribe(CensusStreamSubscription subscription)
+    {
+        var sMessage = JsonSerializer.Serialize(subscription, sendMessageSettings);
 
-        public void Dispose()
+        _logger.LogInformation($"Subscribing to census with: {sMessage}");
+
+        _client!.Send(sMessage);
+    }
+
+    public Task DisconnectAsync()
+    {
+        _client?.Dispose();
+        return Task.CompletedTask;
+    }
+
+    public Task ReconnectAsync()
+    {
+        return _client?.Reconnect()!;
+    }
+
+    private Uri GetEndpoint()
+    {
+        var ns = _serviceNamespace ?? _options.Value.CensusServiceNamespace ?? Constants.DefaultServiceNamespace;
+        var sId = _serviceId ?? _options.Value.CensusServiceId ?? Constants.DefaultServiceId;
+        var endpoint = _endpoint ?? _options.Value.CensusWebsocketEndpoint ?? Constants.CensusWebsocketEndpoint;
+
+        return new Uri($"{endpoint}?environment={ns}&service-id=s:{sId}");
+    }
+
+    public CensusStreamClient SetServiceId(string serviceId)
+    {
+        if (string.IsNullOrWhiteSpace(serviceId))
         {
-            _client?.Dispose();
+            throw new ArgumentNullException(nameof(serviceId));
         }
+
+        _serviceId = serviceId;
+
+        return this;
+    }
+
+    public CensusStreamClient SetServiceNamespace(string serviceNamespace)
+    {
+        if (string.IsNullOrWhiteSpace(serviceNamespace))
+        {
+            throw new ArgumentNullException(nameof(serviceNamespace));
+        }
+
+        _serviceNamespace = serviceNamespace;
+
+        return this;
+    }
+
+    public CensusStreamClient SetEndpoint(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            throw new ArgumentNullException(nameof(endpoint));
+        }
+
+        _endpoint = endpoint;
+
+        return this;
+    }
+
+    public void Dispose()
+    {
+        _client?.Dispose();
     }
 }

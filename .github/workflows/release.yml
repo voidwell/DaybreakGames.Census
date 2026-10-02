@@ -7,22 +7,22 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest\
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore DaybreakGames.Census.sln
+        run: dotnet restore DaybreakGames.Census.slnx
 
       - name: Build
-        run: dotnet build DaybreakGames.Census.sln --configuration Release --no-restore
+        run: dotnet build DaybreakGames.Census.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test DaybreakGames.Census.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test DaybreakGames.Census.slnx --configuration Release --no-build --verbosity normal
 
       - name: Publish
         run: |
