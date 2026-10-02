@@ -24,11 +24,15 @@ jobs:
       - name: Test
         run: dotnet test DaybreakGames.Census.slnx --configuration Release --no-build --verbosity normal
 
+      - name: Pack
+        run: >
+          dotnet pack src/DaybreakGames.Census/DaybreakGames.Census.csproj
+          --configuration Release --no-build -o ./pack
+          -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+          -p:PackageVersion=${GITHUB_REF_NAME#v}
+
       - name: Publish
-        run: |
-          dotnet pack -o ./pack -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=$GITHUB_REF_NAME
-          nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
-          nuget push **\*.snupkg -Source 'https://nuget.smbsrc.net/' -ApiKey ${{secrets.NUGET_API_KEY}}
+        run: dotnet nuget push "./pack/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
