@@ -31,7 +31,7 @@ jobs:
           nuget push **\*.snupkg -Source 'https://nuget.smbsrc.net/' -ApiKey ${{secrets.NUGET_API_KEY}}
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           assets: ./pack/*.nupkg, ./pack/*.snupkg
           generate_release_notes: true
