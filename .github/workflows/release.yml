@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest\
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore
+        run: dotnet restore DaybreakGames.Census.sln
+
+      - name: Build
+        run: dotnet build DaybreakGames.Census.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test DaybreakGames.Census.sln --configuration Release --no-build --verbosity normal
+
+      - name: Publish
+        run: |
+          dotnet pack -o ./pack -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:PackageVersion=$GITHUB_REF_NAME
+          nuget push **\*.nupkg -Source 'https://api.nuget.org/v3/index.json' -ApiKey ${{secrets.NUGET_API_KEY}}
+          nuget push **\*.snupkg -Source 'https://nuget.smbsrc.net/' -ApiKey ${{secrets.NUGET_API_KEY}}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          assets: ./pack/*.nupkg, ./pack/*.snupkg
+          generate_release_notes: true
