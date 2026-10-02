@@ -21,7 +21,7 @@ public class DemoController : Controller
     }
 
     [HttpPost("character")]
-    public async Task<IActionResult> GetCharacter(string characterName)
+    public async Task<IActionResult> GetCharacterAsync(string characterName)
     {
         var names = characterName.ToLower().Split(',').Select(a => a.Trim()).ToArray();
 
@@ -40,7 +40,7 @@ public class DemoController : Controller
     }
 
     [HttpPost("outfit")]
-    public async Task<IActionResult> GetOutfit(string outfitAlias)
+    public async Task<IActionResult> GetOutfitAsync(string outfitAlias)
     {
         var query = _censusFactory.Create("outfit");
         query.Where("alias").Equals(outfitAlias);

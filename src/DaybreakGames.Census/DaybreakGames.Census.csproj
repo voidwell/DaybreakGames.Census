@@ -25,4 +25,8 @@ Please see the project page for documentation.
     <PackageReference Include="Websocket.Client" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="DaybreakGames.Census.Test" />
+  </ItemGroup>
+
 </Project>

@@ -2,10 +2,9 @@
 
 namespace DaybreakGames.Census.Test;
 
-[TestClass]
 public class CensusUriTest
 {
-    [TestMethod]
+    [Fact]
     public void CensusCreatesBaseUri()
     {
         var service = "character";
@@ -18,10 +17,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalEquals()
     {
         var service = "character";
@@ -36,10 +35,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalLessThan()
     {
         var service = "character";
@@ -54,10 +53,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalLessThanOrEquals()
     {
         var service = "character";
@@ -72,10 +71,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalGreaterThan()
     {
         var service = "character";
@@ -90,10 +89,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalGreaterThanOrEquals()
     {
         var service = "character";
@@ -108,10 +107,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalStartsWith()
     {
         var service = "character";
@@ -126,10 +125,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalContains()
     {
         var service = "character";
@@ -144,10 +143,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalNotEquals()
     {
         var service = "character";
@@ -162,10 +161,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusConditionalMultipleConditions()
     {
         var service = "character";
@@ -182,10 +181,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddResolve()
     {
         var service = "character";
@@ -200,10 +199,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddResolveMany()
     {
         var service = "character";
@@ -218,10 +217,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddLanguage()
     {
         var service = "character";
@@ -236,10 +235,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddJoin()
     {
         var service = "character";
@@ -259,10 +258,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddJoinWithSubJoin()
     {
         var service = "character";
@@ -281,10 +280,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddTree()
     {
         var service = "character";
@@ -301,10 +300,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusAddTreeWithSubTree()
     {
         var service = "character";
@@ -323,10 +322,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusShowFields()
     {
         var service = "character";
@@ -341,10 +340,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusHideFields()
     {
         var service = "character";
@@ -359,10 +358,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusTestHttps()
     {
         var service = "character";
@@ -377,10 +376,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusUseExactMatchFirst()
     {
         var service = "character";
@@ -395,10 +394,10 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
-    [TestMethod]
+    [Fact]
     public void CensusLimitPerDB()
     {
         var service = "character";
@@ -413,7 +412,7 @@ public class CensusUriTest
 
         var censusUri = query.GetUri();
 
-        Assert.AreEqual(expectedUri, censusUri);
+        Assert.Equal(expectedUri, censusUri);
     }
 
     private static CensusQueryFactory GetCensusQueryFactory(bool useHttps = false)

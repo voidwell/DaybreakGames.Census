@@ -22,7 +22,7 @@ public class WebsocketMonitor : IWebsocketMonitor, IDisposable
         _logger = logger;
 
         _client.OnConnect(OnConnect)
-            .OnMessage(OnMessage)
+            .OnMessage(OnMessageAsync)
             .OnDisconnect(OnDisconnect);
     }
 
@@ -52,7 +52,7 @@ public class WebsocketMonitor : IWebsocketMonitor, IDisposable
         return Task.CompletedTask;
     }
 
-    private async Task OnMessage(string message)
+    private async Task OnMessageAsync(string message)
     {
         if (message == null)
         {
