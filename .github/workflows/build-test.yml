@@ -19,7 +19,7 @@ jobs:
         run: dotnet restore DaybreakGames.Census.slnx
 
       - name: Lint
-        run: dotnet format DaybreakGames.Census.slnx --verify-no-changes --severity warning --no-restore
+        run: dotnet format DaybreakGames.Census.slnx --verify-no-changes --severity error --no-restore
 
       - name: Build
         run: dotnet build DaybreakGames.Census.slnx --configuration Release --no-restore
