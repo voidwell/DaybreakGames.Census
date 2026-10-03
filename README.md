@@ -1,7 +1,7 @@
 # DaybreakGames.Census
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/voidwell/daybreakgames.census/build-test.yml?branch=main&style=for-the-badge)](https://github.com/voidwell/daybreakgames.census/actions/workflows/build-test.yml)
-[![Latest Release](https://img.shields.io/github/v/release/voidwell/daybreakgames.census?style=for-the-badge)](https://github.com/wakeops/clamor/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/voidwell/daybreakgames.census?style=for-the-badge)](https://github.com/voidwell/daybreakgames/releases/latest)
 [![NuGet](https://img.shields.io/nuget/v/DaybreakGames.Census.svg?style=for-the-badge)](https://www.nuget.org/packages/DaybreakGames.Census/)
 [![MIT License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
