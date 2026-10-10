@@ -1,4 +1,4 @@
-using DaybreakGames.Census.Operators;
+﻿using DaybreakGames.Census.Operators;
 using Microsoft.Extensions.Options;
 
 namespace DaybreakGames.Census.Test;

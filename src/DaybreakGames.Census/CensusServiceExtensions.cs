@@ -1,4 +1,4 @@
-using DaybreakGames.Census;
+﻿using DaybreakGames.Census;
 using DaybreakGames.Census.Stream;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;

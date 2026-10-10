@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.JsonConverters;
