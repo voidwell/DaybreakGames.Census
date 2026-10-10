@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.JsonConverters;
@@ -15,17 +15,11 @@ public class CensusClient : ICensusClient
     private readonly HttpClient _client;
     private readonly JsonSerializerOptions _serializerOptions;
 
-    public CensusClient(IOptions<CensusOptions> options, ILogger<CensusClient> logger)
+    public CensusClient(HttpClient client, IOptions<CensusOptions> options, ILogger<CensusClient> logger)
     {
+        _client = client;
         _options = options;
         _logger = logger;
-
-        _client = new HttpClient();
-
-        if (options.Value.UserAgent != null)
-        {
-            _client.DefaultRequestHeaders.UserAgent.TryParseAdd(options.Value.UserAgent);
-        }
 
         _serializerOptions = new JsonSerializerOptions
         {
@@ -44,12 +38,12 @@ public class CensusClient : ICensusClient
         return new CensusQuery(this, serviceName);
     }
 
-    public Task<IEnumerable<T>> ExecuteQueryList<T>(CensusQuery query)
+    public Task<IEnumerable<T>> ExecuteQueryListAsync<T>(CensusQuery query, CancellationToken cancellationToken)
     {
-        return ExecuteQuery<IEnumerable<T>>(query);
+        return ExecuteQueryAsync<IEnumerable<T>>(query, cancellationToken);
     }
 
-    public async Task<T> ExecuteQuery<T>(CensusQuery query)
+    public async Task<T> ExecuteQueryAsync<T>(CensusQuery query, CancellationToken cancellationToken)
     {
         var requestUri = CreateRequestUri(query);
         _logger.LogTrace(85400, $"Getting Census request for: \"{requestUri}\"");
@@ -60,7 +54,7 @@ public class CensusClient : ICensusClient
 
             try
             {
-                result = await _client.GetAsync(requestUri);
+                result = await _client.GetAsync(requestUri, cancellationToken);
             }
             catch (HttpRequestException ex)
             {
@@ -120,7 +114,7 @@ public class CensusClient : ICensusClient
         }
     }
 
-    public async Task<IEnumerable<T>> ExecuteQueryBatch<T>(CensusQuery query)
+    public async Task<IEnumerable<T>> ExecuteQueryBatchAsync<T>(CensusQuery query, CancellationToken cancellationToken)
     {
         var count = 0;
         List<JsonElement> batchResult = new List<JsonElement>();
@@ -135,7 +129,7 @@ public class CensusClient : ICensusClient
             query.SetStart(count);
         }
 
-        var result = await ExecuteQueryList<JsonElement>(query);
+        var result = await ExecuteQueryListAsync<JsonElement>(query, cancellationToken);
 
         if (result.Count() < Constants.DefaultBatchLimit)
         {
@@ -154,7 +148,7 @@ public class CensusClient : ICensusClient
             count += result.Count();
             query.SetStart(count);
 
-            result = await ExecuteQuery<IEnumerable<JsonElement>>(query);
+            result = await ExecuteQueryAsync<IEnumerable<JsonElement>>(query, cancellationToken);
         } while (result.Any());
 
         return batchResult.Select(r => Convert<T>(r));
@@ -197,10 +191,5 @@ public class CensusClient : ICensusClient
     private T Convert<T>(JsonElement content)
     {
         return content.Deserialize<T>(_serializerOptions)!;
-    }
-
-    public void Dispose()
-    {
-        _client.Dispose();
     }
 }

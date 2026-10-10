@@ -22,6 +22,8 @@ For a full demonstration check out the [DemoApp](https://github.com/voidwell/Day
 - [Creating a new query](#creating-a-new-query)
 - [Returning data from the query](#returning-data-from-the-query)
 - [Setting global parameters](#setting-global-parameters)
+- [Cancelling a query](#cancelling-a-query)
+- [Configuring the HTTP client and timeout](#configuring-the-http-client-and-timeout)
 - [Defining a condition](#defining-a-condition)
 - [Setting a language](#setting-a-language)
 - [Show certain fields](#show-certain-fields)
@@ -87,6 +89,44 @@ public void ConfigureServices(IServiceCollection services)
             });
 }
 ```
+
+### Cancelling a query
+
+`GetAsync`, `GetListAsync` and `GetBatchAsync` (and their generic overloads) accept an optional
+`CancellationToken`. Cancelling it aborts the in-flight request and throws an
+`OperationCanceledException`. For `GetBatchAsync` the token is checked between each page request.
+
+```C#
+var characters = await query.GetListAsync<CensusCharacterModel>(cancellationToken);
+```
+
+A request that exceeds `CensusTimeout` (see below) is cancelled the same way.
+
+### Configuring the HTTP client and timeout
+
+Census requests are sent through a typed `HttpClient` registered with `AddHttpClient`, so the
+client's lifetime and handlers are managed by `IHttpClientFactory`. `CensusTimeout` (default
+10 seconds) and `UserAgent` are applied to that client.
+
+```C#
+services.AddCensusServices(options =>
+        {
+            options.CensusTimeout = TimeSpan.FromSeconds(30);
+            options.UserAgent = "my-app/1.0";
+        });
+```
+
+Because the client is registered through `AddHttpClient`, `ICensusClient` and `ICensusQueryFactory`
+are transient and no longer implement `IDisposable`. To customize the underlying client further
+(retry policies, handlers, etc.), call `AddHttpClient` for it again after `AddCensusServices()`:
+
+```C#
+services.AddCensusServices();
+services.AddHttpClient<ICensusClient, CensusClient>()
+        .AddStandardResilienceHandler();
+```
+
+The stream client reconnects automatically if no message is received within 35 seconds.
 
 ### Defining a condition
 

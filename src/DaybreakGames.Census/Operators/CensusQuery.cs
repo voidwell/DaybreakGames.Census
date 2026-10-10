@@ -265,35 +265,35 @@ public sealed class CensusQuery : CensusOperator
         return newArg.Operand;
     }
 
-    public Task<JsonElement> GetAsync()
+    public Task<JsonElement> GetAsync(CancellationToken cancellationToken = default)
     {
-        return GetAsync<JsonElement>();
+        return GetAsync<JsonElement>(cancellationToken);
     }
 
-    public Task<IEnumerable<JsonElement>> GetListAsync()
+    public Task<IEnumerable<JsonElement>> GetListAsync(CancellationToken cancellationToken = default)
     {
-        return GetListAsync<JsonElement>();
+        return GetListAsync<JsonElement>(cancellationToken);
     }
 
-    public Task<IEnumerable<JsonElement>> GetBatchAsync()
+    public Task<IEnumerable<JsonElement>> GetBatchAsync(CancellationToken cancellationToken = default)
     {
-        return GetBatchAsync<JsonElement>();
+        return GetBatchAsync<JsonElement>(cancellationToken);
     }
 
-    public async Task<T?> GetAsync<T>()
+    public async Task<T?> GetAsync<T>(CancellationToken cancellationToken = default)
     {
-        var result = await GetListAsync<T>();
+        var result = await GetListAsync<T>(cancellationToken);
         return result == null ? default(T) : result.FirstOrDefault();
     }
 
-    public Task<IEnumerable<T>> GetListAsync<T>()
+    public Task<IEnumerable<T>> GetListAsync<T>(CancellationToken cancellationToken = default)
     {
-        return _censusClient.ExecuteQuery<IEnumerable<T>>(this);
+        return _censusClient.ExecuteQueryListAsync<T>(this, cancellationToken);
     }
 
-    public Task<IEnumerable<T>> GetBatchAsync<T>()
+    public Task<IEnumerable<T>> GetBatchAsync<T>(CancellationToken cancellationToken = default)
     {
-        return _censusClient.ExecuteQueryBatch<T>(this);
+        return _censusClient.ExecuteQueryBatchAsync<T>(this, cancellationToken);
     }
 
     public Uri GetUri()

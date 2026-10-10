@@ -1,12 +1,12 @@
-﻿using DaybreakGames.Census.Operators;
+using DaybreakGames.Census.Operators;
 
 namespace DaybreakGames.Census;
 
-public interface ICensusClient : IDisposable
+public interface ICensusClient
 {
     CensusQuery CreateQuery(string serviceName);
-    Task<T> ExecuteQuery<T>(CensusQuery query);
-    Task<IEnumerable<T>> ExecuteQueryList<T>(CensusQuery query);
-    Task<IEnumerable<T>> ExecuteQueryBatch<T>(CensusQuery query);
+    Task<T> ExecuteQueryAsync<T>(CensusQuery query, CancellationToken cancellationToken);
+    Task<IEnumerable<T>> ExecuteQueryListAsync<T>(CensusQuery query, CancellationToken cancellationToken);
+    Task<IEnumerable<T>> ExecuteQueryBatchAsync<T>(CensusQuery query, CancellationToken cancellationToken);
     Uri CreateRequestUri(CensusQuery query);
 }

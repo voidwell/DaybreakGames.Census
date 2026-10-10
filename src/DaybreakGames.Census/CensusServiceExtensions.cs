@@ -1,6 +1,7 @@
-﻿using DaybreakGames.Census;
+using DaybreakGames.Census;
 using DaybreakGames.Census.Stream;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -57,8 +58,19 @@ public static class CensusServiceExtensions
 
     internal static void ConfiureCensusServices(IServiceCollection services)
     {
-        services.TryAddSingleton<ICensusClient, CensusClient>();
-        services.TryAddSingleton<ICensusQueryFactory, CensusQueryFactory>();
+        services.AddHttpClient<ICensusClient, CensusClient>((sp, client) =>
+        {
+            var options = sp.GetRequiredService<IOptions<CensusOptions>>().Value;
+
+            client.Timeout = options.CensusTimeout;
+
+            if (options.UserAgent != null)
+            {
+                client.DefaultRequestHeaders.UserAgent.TryParseAdd(options.UserAgent);
+            }
+        });
+
+        services.TryAddTransient<ICensusQueryFactory, CensusQueryFactory>();
         services.TryAddTransient<ICensusStreamClient, CensusStreamClient>();
     }
 }

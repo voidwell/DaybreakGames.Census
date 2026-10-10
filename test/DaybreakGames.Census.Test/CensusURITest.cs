@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 
 namespace DaybreakGames.Census.Test;
 
@@ -425,7 +425,7 @@ public class CensusUriTest
             UseHttps = useHttps
         };
 
-        var censusClient = new CensusClient(Options.Create(options), null!);
+        var censusClient = new CensusClient(new HttpClient(), Options.Create(options), null!);
 
         return new CensusQueryFactory(censusClient);
     }

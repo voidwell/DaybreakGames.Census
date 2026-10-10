@@ -1,4 +1,4 @@
-﻿using DaybreakGames.Census.Operators;
+using DaybreakGames.Census.Operators;
 using Microsoft.Extensions.Options;
 
 namespace DaybreakGames.Census.Test;
@@ -22,7 +22,7 @@ public class CensusQueryBuilderTests
     [Fact]
     public void CensusDefaultOptionsBuildUri()
     {
-        using var client = Client(new CensusOptions());
+        var client = Client(new CensusOptions());
 
         var uri = client.CreateQuery("character").GetUri();
 
@@ -32,7 +32,7 @@ public class CensusQueryBuilderTests
     [Fact]
     public void CensusQueryServiceIdOverridesOptions()
     {
-        using var client = Client(new CensusOptions { CensusServiceId = "optionsKey" });
+        var client = Client(new CensusOptions { CensusServiceId = "optionsKey" });
 
         var uri = client.CreateQuery("character").SetServiceId("queryKey").GetUri();
 
@@ -42,7 +42,7 @@ public class CensusQueryBuilderTests
     [Fact]
     public void CensusQueryServiceNamespaceOverridesOptions()
     {
-        using var client = Client(new CensusOptions());
+        var client = Client(new CensusOptions());
 
         var uri = client.CreateQuery("character").SetServiceNamespace("ps2ps4eu:v2").GetUri();
 
@@ -52,7 +52,7 @@ public class CensusQueryBuilderTests
     [Fact]
     public void CensusCustomApiEndpoint()
     {
-        using var client = Client(new CensusOptions { CensusApiEndpoint = "example.test:8080", UseHttps = true });
+        var client = Client(new CensusOptions { CensusApiEndpoint = "example.test:8080", UseHttps = true });
 
         var uri = client.CreateQuery("character").GetUri();
 
@@ -136,7 +136,7 @@ public class CensusQueryBuilderTests
     [Fact]
     public void CensusFactoryCreatesQueryForService()
     {
-        using var client = Client(new CensusOptions());
+        var client = Client(new CensusOptions());
         var factory = new CensusQueryFactory(client);
 
         var query = factory.Create("world");
@@ -152,6 +152,6 @@ public class CensusQueryBuilderTests
 
     private static CensusClient Client(CensusOptions options)
     {
-        return new CensusClient(Options.Create(options), null!);
+        return new CensusClient(new HttpClient(), Options.Create(options), null!);
     }
 }

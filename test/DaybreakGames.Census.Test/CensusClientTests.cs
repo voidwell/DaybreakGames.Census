@@ -1,4 +1,5 @@
-﻿using DaybreakGames.Census.Exceptions;
+using Microsoft.Extensions.DependencyInjection;
+using DaybreakGames.Census.Exceptions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -34,9 +35,9 @@ public class CensusClientTests
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c,
             "{\"character_list\":[{\"character_id\":\"1\",\"level\":\"5\",\"is_active\":\"1\",\"created\":\"1577934245\"},{\"character_id\":\"2\",\"level\":7,\"is_active\":\"0\",\"created\":\"0\"}],\"returned\":2}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var result = (await client.CreateQuery("character").GetListAsync<CharacterModel>()).ToList();
+        var result = (await client.CreateQuery("character").GetListAsync<CharacterModel>(TestContext.Current.CancellationToken)).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Equal("1", result[0].CharacterId);
@@ -52,9 +53,9 @@ public class CensusClientTests
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c,
             "{\"character_list\":[{\"character_id\":\"1\"},{\"character_id\":\"2\"}]}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var result = await client.CreateQuery("character").GetAsync<CharacterModel>();
+        var result = await client.CreateQuery("character").GetAsync<CharacterModel>(TestContext.Current.CancellationToken);
 
         Assert.Equal("1", result!.CharacterId);
     }
@@ -64,9 +65,9 @@ public class CensusClientTests
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c,
             "{\"character_list\":[{\"character_id\":\"1\"}]}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var result = (await client.CreateQuery("character").GetListAsync()).ToList();
+        var result = (await client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken)).ToList();
 
         Assert.Single(result);
         Assert.Equal("1", result[0].GetProperty("character_id").GetString());
@@ -76,12 +77,12 @@ public class CensusClientTests
     public async Task CensusRequestUsesQueryUriAsync()
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"character_list\":[]}"));
-        using var client = Client(server);
+        var client = Client(server);
 
         var query = client.CreateQuery("character").SetLimit(3);
         query.Where("name.first_lower").Equals("abc");
 
-        await query.GetListAsync();
+        await query.GetListAsync(TestContext.Current.CancellationToken);
 
         Assert.Single(server.Requests);
         Assert.Equal("/s:testkey/get/ps2/character/", server.Requests[0].AbsolutePath);
@@ -93,9 +94,9 @@ public class CensusClientTests
     public async Task CensusNonSuccessStatusThrowsConnectionExceptionAsync()
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{}", 500));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var ex = await Assert.ThrowsAsync<CensusConnectionException>(() => client.CreateQuery("character").GetListAsync());
+        var ex = await Assert.ThrowsAsync<CensusConnectionException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains("InternalServerError", ex.Message);
     }
@@ -109,13 +110,13 @@ public class CensusClientTests
             port = server.Port;
         }
 
-        using var client = new CensusClient(Options.Create(new CensusOptions
+        var client = new CensusClient(new HttpClient(), Options.Create(new CensusOptions
         {
             CensusApiEndpoint = $"localhost:{port}",
             CensusServiceId = "testkey"
         }), NullLogger<CensusClient>.Instance);
 
-        await Assert.ThrowsAsync<CensusConnectionException>(() => client.CreateQuery("character").GetListAsync());
+        await Assert.ThrowsAsync<CensusConnectionException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -127,9 +128,9 @@ public class CensusClientTests
             await using var writer = new StreamWriter(c.Response.OutputStream);
             await writer.WriteAsync("<html>maintenance</html>");
         });
-        using var client = Client(server);
+        var client = Client(server);
 
-        var ex = await Assert.ThrowsAsync<CensusException>(() => client.CreateQuery("character").GetListAsync());
+        var ex = await Assert.ThrowsAsync<CensusException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains("Failed to read JSON", ex.Message);
         Assert.NotNull(ex.InnerException);
@@ -139,18 +140,18 @@ public class CensusClientTests
     public async Task CensusServiceUnavailableThrowsAsync()
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"error\":\"service_unavailable\"}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync());
+        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task CensusErrorFieldThrowsServerExceptionAsync()
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"error\":\"something broke\"}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var ex = await Assert.ThrowsAsync<CensusServerException>(() => client.CreateQuery("character").GetListAsync());
+        var ex = await Assert.ThrowsAsync<CensusServerException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal("something broke", ex.Message);
     }
@@ -159,9 +160,9 @@ public class CensusClientTests
     public async Task CensusErrorCodeThrowsServerExceptionAsync()
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"errorCode\":\"SERVER_ERROR\",\"errorMessage\":\"bad things\"}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var ex = await Assert.ThrowsAsync<CensusServerException>(() => client.CreateQuery("character").GetListAsync());
+        var ex = await Assert.ThrowsAsync<CensusServerException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.Equal("SERVER_ERROR: bad things", ex.Message);
     }
@@ -178,9 +179,9 @@ public class CensusClientTests
 
             return TestServer.WriteJsonAsync(c, $"{{\"character_list\":[{items}]}}");
         });
-        using var client = Client(server);
+        var client = Client(server);
 
-        var result = (await client.CreateQuery("character").GetBatchAsync<CharacterModel>()).ToList();
+        var result = (await client.CreateQuery("character").GetBatchAsync<CharacterModel>(TestContext.Current.CancellationToken)).ToList();
 
         Assert.Equal(limit + 3, result.Count);
         Assert.Equal("0", result[0].CharacterId);
@@ -195,9 +196,9 @@ public class CensusClientTests
     {
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c,
             "{\"character_list\":[{\"character_id\":\"1\"},{\"character_id\":\"2\"}]}"));
-        using var client = Client(server);
+        var client = Client(server);
 
-        var result = (await client.CreateQuery("character").GetBatchAsync<CharacterModel>()).ToList();
+        var result = (await client.CreateQuery("character").GetBatchAsync<CharacterModel>(TestContext.Current.CancellationToken)).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Single(server.Requests);
@@ -208,9 +209,9 @@ public class CensusClientTests
     {
         var logger = new ListLogger();
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"error\":\"service_unavailable\"}"));
-        using var client = Client(server, logger, logErrors: true);
+        var client = Client(server, logger, logErrors: true);
 
-        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync());
+        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains((LogLevel.Error, 84531), logger.Entries);
     }
@@ -220,9 +221,9 @@ public class CensusClientTests
     {
         var logger = new ListLogger();
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"error\":\"service_unavailable\"}"));
-        using var client = Client(server, logger, logErrors: false);
+        var client = Client(server, logger, logErrors: false);
 
-        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync());
+        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.DoesNotContain(logger.Entries, e => e.Level == LogLevel.Error);
     }
@@ -236,21 +237,25 @@ public class CensusClientTests
             userAgent = c.Request.UserAgent;
             return TestServer.WriteJsonAsync(c, "{\"character_list\":[]}");
         });
-        using var client = new CensusClient(Options.Create(new CensusOptions
+        var services = new ServiceCollection();
+        services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+        services.AddCensusServices(o =>
         {
-            CensusApiEndpoint = server.Endpoint,
-            CensusServiceId = "testkey",
-            UserAgent = "census-test/1.0"
-        }), NullLogger<CensusClient>.Instance);
+            o.CensusApiEndpoint = server.Endpoint;
+            o.CensusServiceId = "testkey";
+            o.UserAgent = "census-test/1.0";
+        });
+        using var provider = services.BuildServiceProvider();
+        var client = provider.GetRequiredService<ICensusClient>();
 
-        await client.CreateQuery("character").GetListAsync();
+        await client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("census-test/1.0", userAgent);
     }
 
     private static CensusClient Client(TestServer server, ILogger<CensusClient>? logger = null, bool logErrors = false)
     {
-        return new CensusClient(Options.Create(new CensusOptions
+        return new CensusClient(new HttpClient(), Options.Create(new CensusOptions
         {
             CensusApiEndpoint = server.Endpoint,
             CensusServiceId = "testkey",
