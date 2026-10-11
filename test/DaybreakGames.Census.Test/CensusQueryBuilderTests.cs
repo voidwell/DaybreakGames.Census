@@ -15,7 +15,7 @@ public class CensusQueryBuilderTests
         Assert.Equal(Constants.CensusEndpoint, options.CensusApiEndpoint);
         Assert.Equal(Constants.CensusWebsocketEndpoint, options.CensusWebsocketEndpoint);
         Assert.Null(options.UserAgent);
-        Assert.False(options.UseHttps);
+        Assert.True(options.UseHttps);
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class CensusQueryBuilderTests
 
         var uri = client.CreateQuery("character").GetUri();
 
-        Assert.Equal(new Uri($"http://{Constants.CensusEndpoint}/s:example/get/ps2/character/"), uri);
+        Assert.Equal(new Uri($"https://{Constants.CensusEndpoint}/s:example/get/ps2/character/"), uri);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class CensusQueryBuilderTests
 
         var uri = client.CreateQuery("character").SetServiceId("queryKey").GetUri();
 
-        Assert.Equal(new Uri($"http://{Constants.CensusEndpoint}/s:queryKey/get/ps2/character/"), uri);
+        Assert.Equal(new Uri($"https://{Constants.CensusEndpoint}/s:queryKey/get/ps2/character/"), uri);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class CensusQueryBuilderTests
 
         var uri = client.CreateQuery("character").SetServiceNamespace("ps2ps4eu:v2").GetUri();
 
-        Assert.Equal(new Uri($"http://{Constants.CensusEndpoint}/s:example/get/ps2ps4eu:v2/character/"), uri);
+        Assert.Equal(new Uri($"https://{Constants.CensusEndpoint}/s:example/get/ps2ps4eu:v2/character/"), uri);
     }
 
     [Fact]

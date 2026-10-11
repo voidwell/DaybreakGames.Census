@@ -24,7 +24,7 @@ public static class CensusServiceExtensions
 
         services.AddOptions();
 
-        ConfiureCensusServices(services);
+        ConfigureCensusServices(services);
 
         return services;
     }

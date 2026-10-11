@@ -123,6 +123,7 @@ public class CensusClientTests
         var client = new CensusClient(new HttpClient(), Options.Create(new CensusOptions
         {
             CensusApiEndpoint = $"localhost:{port}",
+            UseHttps = false,
             CensusServiceId = "testkey"
         }), NullLogger<CensusClient>.Instance);
 
@@ -299,6 +300,7 @@ public class CensusClientTests
         services.AddCensusServices(o =>
         {
             o.CensusApiEndpoint = server.Endpoint;
+            o.UseHttps = false;
             o.CensusServiceId = "testkey";
             o.UserAgent = "census-test/1.0";
         });
@@ -315,6 +317,7 @@ public class CensusClientTests
         return new CensusClient(httpClient ?? new HttpClient(), Options.Create(new CensusOptions
         {
             CensusApiEndpoint = server.Endpoint,
+            UseHttps = false,
             CensusServiceId = "testkey"
         }), logger ?? NullLogger<CensusClient>.Instance);
     }
