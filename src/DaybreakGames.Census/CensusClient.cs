@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.JsonConverters;
@@ -46,15 +47,22 @@ public class CensusClient : ICensusClient
     public async Task<T> ExecuteQueryAsync<T>(CensusQuery query, CancellationToken cancellationToken)
     {
         var requestUri = CreateRequestUri(query);
-        _logger.LogTrace(85400, $"Getting Census request for: \"{requestUri}\"");
+        _logger.LogTrace(85400, "Sending Census request: {RequestUri}", requestUri);
 
         try
         {
             HttpResponseMessage result;
+            var startTimestamp = Stopwatch.GetTimestamp();
 
             try
             {
                 result = await _client.GetAsync(requestUri, cancellationToken);
+            }
+            catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogTrace(85402, "Census request timed out after {ElapsedMilliseconds:0.0}ms: {RequestUri}",
+                    Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, requestUri);
+                throw;
             }
             catch (HttpRequestException ex)
             {
@@ -64,7 +72,8 @@ public class CensusClient : ICensusClient
                 throw new CensusConnectionException(errorMessage);
             }
 
-            _logger.LogTrace(85401, $"Census Request completed with status code: {result.StatusCode}");
+            _logger.LogTrace(85401, "Census request completed with status code {StatusCode} in {ElapsedMilliseconds:0.0}ms: {RequestUri}",
+                result.StatusCode, Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, requestUri);
 
             if (!result.IsSuccessStatusCode)
             {
@@ -109,7 +118,7 @@ public class CensusClient : ICensusClient
         }
         catch (Exception ex)
         {
-            HandleCensusExceptions(ex, requestUri);
+            LogCensusException(ex, requestUri, cancellationToken);
             throw;
         }
     }
@@ -164,26 +173,27 @@ public class CensusClient : ICensusClient
         return new Uri($"http{(_options.Value.UseHttps ? "s" : "")}://{endpoint}/s:{sId}/get/{ns}/{encArgs}");
     }
 
-    private void HandleCensusExceptions(Exception ex, Uri query)
+    private void LogCensusException(Exception ex, Uri requestUri, CancellationToken cancellationToken)
     {
-        if (!_options.Value.LogCensusErrors)
-        {
-            return;
-        }
-
         switch (ex)
         {
+            case OperationCanceledException when cancellationToken.IsCancellationRequested:
+                // Cancelled by the caller, not a failure
+                break;
+            case TaskCanceledException cex:
+                _logger.LogError(84534, cex, "Census request timed out for query: {RequestUri}", requestUri);
+                break;
             case CensusServiceUnavailableException cex:
-                _logger.LogError(84531, cex, "Census service unavailable during query: {0}", query);
+                _logger.LogError(84531, cex, "Census service unavailable during query: {RequestUri}", requestUri);
                 break;
             case CensusServerException cex:
-                _logger.LogError(84532, cex, "Census server failed for query: {0}", query);
+                _logger.LogError(84532, cex, "Census server failed for query: {RequestUri}", requestUri);
                 break;
             case CensusConnectionException cex:
-                _logger.LogError(84533, cex, "Census connection failed for query: {0}", query);
+                _logger.LogError(84533, cex, "Census connection failed for query: {RequestUri}", requestUri);
                 break;
             default:
-                _logger.LogError(84530, ex, "Unknown exception throw when processing census query: {0}", query);
+                _logger.LogError(84530, ex, "Unknown exception thrown when processing census query: {RequestUri}", requestUri);
                 break;
         }
     }

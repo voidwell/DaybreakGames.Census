@@ -24,6 +24,7 @@ For a full demonstration check out the [DemoApp](https://github.com/voidwell/Day
 - [Setting global parameters](#setting-global-parameters)
 - [Cancelling a query](#cancelling-a-query)
 - [Configuring the HTTP client and timeout](#configuring-the-http-client-and-timeout)
+- [Logging](#logging)
 - [Defining a condition](#defining-a-condition)
 - [Setting a language](#setting-a-language)
 - [Show certain fields](#show-certain-fields)
@@ -127,6 +128,51 @@ services.AddHttpClient<ICensusClient, CensusClient>()
 ```
 
 The stream client reconnects automatically if no message is received within 35 seconds.
+
+### Logging
+
+The library logs through `Microsoft.Extensions.Logging`. All messages use structured templates, so
+properties such as `RequestUri`, `StatusCode` and `ElapsedMilliseconds` are available as fields in
+structured logging sinks. Logging is controlled entirely through the standard log level filters on
+these categories:
+
+| Category | Level | Event Id | Message |
+| --- | --- | --- | --- |
+| `DaybreakGames.Census.CensusClient` | Trace | 85400 | Request sent (`RequestUri`) |
+| `DaybreakGames.Census.CensusClient` | Trace | 85401 | Request completed (`StatusCode`, `ElapsedMilliseconds`, `RequestUri`) |
+| `DaybreakGames.Census.CensusClient` | Trace | 85402 | Request timed out (`ElapsedMilliseconds`, `RequestUri`). The exception is still thrown to the caller |
+| `DaybreakGames.Census.CensusClient` | Error | 84530 | Unknown exception while processing a query |
+| `DaybreakGames.Census.CensusClient` | Error | 84531 | Census service unavailable |
+| `DaybreakGames.Census.CensusClient` | Error | 84532 | Census returned a server error |
+| `DaybreakGames.Census.CensusClient` | Error | 84533 | Connection failed or a non-success status code was returned |
+| `DaybreakGames.Census.CensusClient` | Error | 84534 | Request timed out |
+| `DaybreakGames.Census.Stream.CensusStreamClient` | Information | | Stream connected, reconnected and subscription sent |
+| `DaybreakGames.Census.Stream.CensusStreamClient` | Warning | 75421 | Stream disconnected |
+| `System.Net.Http.HttpClient.ICensusClient.LogicalHandler` | Information | | Request start and end, including duration (from `IHttpClientFactory`) |
+| `System.Net.Http.HttpClient.ICensusClient.ClientHandler` | Information | | Each attempt sent over the wire, including retries (from `IHttpClientFactory`) |
+| `System.Net.Http.HttpClient.ICensusClient.*` | Trace | | Request and response headers (from `IHttpClientFactory`) |
+
+Errors are always logged and the exception is still thrown to the caller. A query cancelled through
+its `CancellationToken` is not logged as an error.
+
+To see a trace of every Census request with timings, lower the level of the `DaybreakGames.Census`
+namespace (or just the `CensusClient` category) in `appsettings.json`:
+
+```json
+{
+    "Logging": {
+        "LogLevel": {
+            "Default": "Information",
+            "DaybreakGames.Census": "Trace",
+            "System.Net.Http.HttpClient.ICensusClient": "Warning"
+        }
+    }
+}
+```
+
+To silence the library entirely, set `"DaybreakGames.Census": "None"`.
+
+**Note:** the logged `RequestUri` includes your service id (`/s:<service-id>/`).
 
 ### Defining a condition
 

@@ -21,10 +21,7 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter());
     });
 
-builder.Services.AddCensusServices(options =>
-{
-    options.LogCensusErrors = true;
-});
+builder.Services.AddCensusServices();
 
 builder.Services.AddSingleton<IWebsocketMonitor, WebsocketMonitor>();
 
