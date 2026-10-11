@@ -58,9 +58,9 @@ public class CensusClient : ICensusClient
             {
                 result = await _client.GetAsync(requestUri, cancellationToken);
             }
-            catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+            catch (TaskCanceledException)
             {
-                _logger.LogTrace(85402, "Census request timed out after {ElapsedMilliseconds:0.0}ms: {RequestUri}",
+                _logger.LogTrace(85402, "Census Task Canceled after {ElapsedMilliseconds:0.0}ms: {RequestUri}",
                     Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds, requestUri);
                 throw;
             }

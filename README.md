@@ -140,7 +140,7 @@ these categories:
 | --- | --- | --- | --- |
 | `DaybreakGames.Census.CensusClient` | Trace | 85400 | Request sent (`RequestUri`) |
 | `DaybreakGames.Census.CensusClient` | Trace | 85401 | Request completed (`StatusCode`, `ElapsedMilliseconds`, `RequestUri`) |
-| `DaybreakGames.Census.CensusClient` | Trace | 85402 | Request timed out (`ElapsedMilliseconds`, `RequestUri`). The exception is still thrown to the caller |
+| `DaybreakGames.Census.CensusClient` | Trace | 85402 | Request task canceled, either by a timeout or the caller's `CancellationToken` (`ElapsedMilliseconds`, `RequestUri`). The exception is still thrown to the caller |
 | `DaybreakGames.Census.CensusClient` | Error | 84530 | Unknown exception while processing a query |
 | `DaybreakGames.Census.CensusClient` | Error | 84531 | Census service unavailable |
 | `DaybreakGames.Census.CensusClient` | Error | 84532 | Census returned a server error |

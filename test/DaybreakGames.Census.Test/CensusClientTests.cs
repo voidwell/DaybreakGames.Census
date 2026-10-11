@@ -282,7 +282,7 @@ public class CensusClientTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.CreateQuery("character").GetListAsync(cts.Token));
 
         Assert.DoesNotContain(logger.Entries, e => e.Level == LogLevel.Error);
-        Assert.DoesNotContain((LogLevel.Trace, 85402), logger.Entries);
+        Assert.Contains((LogLevel.Trace, 85402), logger.Entries);
     }
 
     [Fact]
