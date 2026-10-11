@@ -16,7 +16,6 @@ public class CensusQueryBuilderTests
         Assert.Equal(Constants.CensusWebsocketEndpoint, options.CensusWebsocketEndpoint);
         Assert.Null(options.UserAgent);
         Assert.False(options.UseHttps);
-        Assert.False(options.LogCensusErrors);
     }
 
     [Fact]

@@ -66,7 +66,7 @@ public class CensusStreamClient : ICensusStreamClient
 
         _client.DisconnectionHappened.Subscribe(info =>
         {
-            _logger.LogWarning(75421, $"Stream disconnected: {info.Type}: {info.Exception}");
+            _logger.LogWarning(75421, info.Exception, "Stream disconnected: {DisconnectionType}", info.Type);
 
             if (_onDisconnected != null)
             {
@@ -82,7 +82,7 @@ public class CensusStreamClient : ICensusStreamClient
             }
             else
             {
-                _logger.LogInformation($"Stream reconnection occured: {info.Type}");
+                _logger.LogInformation("Stream reconnection occurred: {ReconnectionType}", info.Type);
             }
 
             if (_onConnect != null)
@@ -106,7 +106,7 @@ public class CensusStreamClient : ICensusStreamClient
     {
         var sMessage = JsonSerializer.Serialize(subscription, sendMessageSettings);
 
-        _logger.LogInformation($"Subscribing to census with: {sMessage}");
+        _logger.LogInformation("Subscribing to census with: {Subscription}", sMessage);
 
         _client!.Send(sMessage);
     }

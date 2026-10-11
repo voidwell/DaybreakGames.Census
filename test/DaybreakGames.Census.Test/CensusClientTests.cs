@@ -1,4 +1,6 @@
-﻿using DaybreakGames.Census.Exceptions;
+﻿using System.Collections.Concurrent;
+using System.Net;
+using DaybreakGames.Census.Exceptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -18,7 +20,11 @@ public class CensusClientTests
 
     private sealed class ListLogger : ILogger<CensusClient>
     {
-        public List<(LogLevel Level, int EventId)> Entries { get; } = new();
+        private readonly ConcurrentQueue<(LogLevel Level, int EventId, IReadOnlyDictionary<string, object?> Properties)> _entries = new();
+
+        public IReadOnlyList<(LogLevel Level, int EventId)> Entries => _entries.Select(e => (e.Level, e.EventId)).ToList();
+
+        public IReadOnlyDictionary<string, object?> Properties(int eventId) => _entries.Single(e => e.EventId == eventId).Properties;
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
@@ -26,7 +32,11 @@ public class CensusClientTests
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            Entries.Add((logLevel, eventId.Id));
+            var properties = state is IEnumerable<KeyValuePair<string, object?>> kvps
+                ? kvps.ToDictionary(kv => kv.Key, kv => kv.Value)
+                : new Dictionary<string, object?>();
+
+            _entries.Enqueue((logLevel, eventId.Id, properties));
         }
     }
 
@@ -205,27 +215,74 @@ public class CensusClientTests
     }
 
     [Fact]
-    public async Task CensusLogsErrorsWhenEnabledAsync()
+    public async Task CensusLogsErrorsAsync()
     {
         var logger = new ListLogger();
         using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"error\":\"service_unavailable\"}"));
-        var client = Client(server, logger, logErrors: true);
+        var client = Client(server, logger);
 
         await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
 
         Assert.Contains((LogLevel.Error, 84531), logger.Entries);
+        Assert.IsType<Uri>(logger.Properties(84531)["RequestUri"]);
     }
 
     [Fact]
-    public async Task CensusDoesNotLogErrorsWhenDisabledAsync()
+    public async Task CensusTracesRequestWithTimingAsync()
     {
         var logger = new ListLogger();
-        using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"error\":\"service_unavailable\"}"));
-        var client = Client(server, logger, logErrors: false);
+        using var server = new TestServer(c => TestServer.WriteJsonAsync(c, "{\"character_list\":[]}"));
+        var client = Client(server, logger);
 
-        await Assert.ThrowsAsync<CensusServiceUnavailableException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
+        await client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains((LogLevel.Trace, 85400), logger.Entries);
+        Assert.Contains((LogLevel.Trace, 85401), logger.Entries);
+        Assert.IsType<Uri>(logger.Properties(85400)["RequestUri"]);
+
+        var completed = logger.Properties(85401);
+        Assert.Equal(HttpStatusCode.OK, completed["StatusCode"]);
+        Assert.IsType<double>(completed["ElapsedMilliseconds"]);
+        Assert.IsType<Uri>(completed["RequestUri"]);
+    }
+
+    [Fact]
+    public async Task CensusTracesAndRethrowsTimeoutAsync()
+    {
+        var logger = new ListLogger();
+        using var server = new TestServer(async c =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            await TestServer.WriteJsonAsync(c, "{\"character_list\":[]}");
+        });
+        var client = Client(server, logger, new HttpClient { Timeout = TimeSpan.FromMilliseconds(200) });
+
+        var ex = await Assert.ThrowsAsync<TaskCanceledException>(() => client.CreateQuery("character").GetListAsync(TestContext.Current.CancellationToken));
+
+        Assert.IsType<TimeoutException>(ex.InnerException);
+        Assert.Contains((LogLevel.Trace, 85402), logger.Entries);
+        Assert.IsType<double>(logger.Properties(85402)["ElapsedMilliseconds"]);
+        Assert.Contains((LogLevel.Error, 84534), logger.Entries);
+        Assert.DoesNotContain((LogLevel.Trace, 85401), logger.Entries);
+    }
+
+    [Fact]
+    public async Task CensusDoesNotLogErrorWhenCallerCancelsAsync()
+    {
+        var logger = new ListLogger();
+        using var server = new TestServer(async c =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            await TestServer.WriteJsonAsync(c, "{\"character_list\":[]}");
+        });
+        var client = Client(server, logger);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromMilliseconds(200));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.CreateQuery("character").GetListAsync(cts.Token));
 
         Assert.DoesNotContain(logger.Entries, e => e.Level == LogLevel.Error);
+        Assert.Contains((LogLevel.Trace, 85402), logger.Entries);
     }
 
     [Fact]
@@ -253,13 +310,12 @@ public class CensusClientTests
         Assert.Equal("census-test/1.0", userAgent);
     }
 
-    private static CensusClient Client(TestServer server, ILogger<CensusClient>? logger = null, bool logErrors = false)
+    private static CensusClient Client(TestServer server, ILogger<CensusClient>? logger = null, HttpClient? httpClient = null)
     {
-        return new CensusClient(new HttpClient(), Options.Create(new CensusOptions
+        return new CensusClient(httpClient ?? new HttpClient(), Options.Create(new CensusOptions
         {
             CensusApiEndpoint = server.Endpoint,
-            CensusServiceId = "testkey",
-            LogCensusErrors = logErrors
+            CensusServiceId = "testkey"
         }), logger ?? NullLogger<CensusClient>.Instance);
     }
 }

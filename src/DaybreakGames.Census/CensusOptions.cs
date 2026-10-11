@@ -8,6 +8,5 @@ public class CensusOptions
     public string CensusWebsocketEndpoint { get; set; } = Constants.CensusWebsocketEndpoint;
     public string? UserAgent { get; set; } = null;
     public bool UseHttps { get; set; } = false;
-    public bool LogCensusErrors { get; set; } = false;
     public TimeSpan CensusTimeout { get; set; } = TimeSpan.FromSeconds(10);
 }
