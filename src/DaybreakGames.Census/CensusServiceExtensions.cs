@@ -49,14 +49,14 @@ public static class CensusServiceExtensions
             throw new ArgumentNullException(nameof(setupAction));
         }
 
-        ConfiureCensusServices(services);
+        ConfigureCensusServices(services);
 
         services.Configure(setupAction);
 
         return services;
     }
 
-    internal static void ConfiureCensusServices(IServiceCollection services)
+    internal static void ConfigureCensusServices(IServiceCollection services)
     {
         services.AddHttpClient<ICensusClient, CensusClient>((sp, client) =>
         {
