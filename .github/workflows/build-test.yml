@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+env:
+  SOLUTION: DaybreakGames.Census.slnx
+  CONFIGURATION: Release
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,13 +20,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore DaybreakGames.Census.slnx
+        run: dotnet restore ${{ env.SOLUTION }}
 
       - name: Lint
-        run: dotnet format DaybreakGames.Census.slnx --verify-no-changes --severity error --no-restore
+        run: dotnet format ${{ env.SOLUTION }} --verify-no-changes --severity error --no-restore
 
       - name: Build
-        run: dotnet build DaybreakGames.Census.slnx --configuration Release --no-restore
+        run: dotnet build ${{ env.SOLUTION }} --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Test
-        run: dotnet test DaybreakGames.Census.slnx --configuration Release --no-build --verbosity normal
+        run: dotnet test ${{ env.SOLUTION }} --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal

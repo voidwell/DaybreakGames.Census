@@ -1,4 +1,6 @@
-﻿namespace DaybreakGames.Census.Operators;
+﻿using System.Numerics;
+
+namespace DaybreakGames.Census.Operators;
 
 public sealed class CensusOperand
 {
@@ -10,17 +12,7 @@ public sealed class CensusOperand
         SetEquals(value);
     }
 
-    public void Equals(params int[] value)
-    {
-        SetEquals(value);
-    }
-
-    public void Equals(params double[] value)
-    {
-        SetEquals(value);
-    }
-
-    public void Equals(params float[] value)
+    public void Equals<T>(params T[] value) where T : INumber<T>
     {
         SetEquals(value);
     }
@@ -35,17 +27,7 @@ public sealed class CensusOperand
         SetNotEquals(value);
     }
 
-    public void NotEquals(params int[] value)
-    {
-        SetNotEquals(value);
-    }
-
-    public void NotEquals(params double[] value)
-    {
-        SetNotEquals(value);
-    }
-
-    public void NotEquals(params float[] value)
+    public void NotEquals<T>(params T[] value) where T : INumber<T>
     {
         SetNotEquals(value);
     }
@@ -55,17 +37,7 @@ public sealed class CensusOperand
         SetNotEquals(value);
     }
 
-    public void IsLessThan(int value)
-    {
-        SetIsLessThan(value);
-    }
-
-    public void IsLessThan(double value)
-    {
-        SetIsLessThan(value);
-    }
-
-    public void IsLessThan(float value)
+    public void IsLessThan<T>(T value) where T : INumber<T>
     {
         SetIsLessThan(value);
     }
@@ -75,17 +47,7 @@ public sealed class CensusOperand
         SetIsLessThan(value);
     }
 
-    public void IsLessThanOrEquals(int value)
-    {
-        SetIsLessThanOrEquals(value);
-    }
-
-    public void IsLessThanOrEquals(double value)
-    {
-        SetIsLessThanOrEquals(value);
-    }
-
-    public void IsLessThanOrEquals(float value)
+    public void IsLessThanOrEquals<T>(T value) where T : INumber<T>
     {
         SetIsLessThanOrEquals(value);
     }
@@ -95,17 +57,7 @@ public sealed class CensusOperand
         SetIsLessThanOrEquals(value);
     }
 
-    public void IsGreaterThan(int value)
-    {
-        SetIsGreaterThan(value);
-    }
-
-    public void IsGreaterThan(double value)
-    {
-        SetIsGreaterThan(value);
-    }
-
-    public void IsGreaterThan(float value)
+    public void IsGreaterThan<T>(T value) where T : INumber<T>
     {
         SetIsGreaterThan(value);
     }
@@ -115,17 +67,7 @@ public sealed class CensusOperand
         SetIsGreaterThan(value);
     }
 
-    public void IsGreaterThanOrEquals(int value)
-    {
-        SetIsGreaterThanOrEquals(value);
-    }
-
-    public void IsGreaterThanOrEquals(double value)
-    {
-        SetIsGreaterThanOrEquals(value);
-    }
-
-    public void IsGreaterThanOrEquals(float value)
+    public void IsGreaterThanOrEquals<T>(T value) where T : INumber<T>
     {
         SetIsGreaterThanOrEquals(value);
     }
