@@ -22,6 +22,7 @@ For a full demonstration check out the [DemoApp](https://github.com/voidwell/Day
 - [Creating a new query](#creating-a-new-query)
 - [Returning data from the query](#returning-data-from-the-query)
 - [Setting global parameters](#setting-global-parameters)
+- [Using multiple namespaces or service ids](#using-multiple-namespaces-or-service-ids)
 - [Cancelling a query](#cancelling-a-query)
 - [Configuring the HTTP client and timeout](#configuring-the-http-client-and-timeout)
 - [Logging](#logging)
@@ -89,6 +90,50 @@ public void ConfigureServices(IServiceCollection services)
                 options.CensusServiceNamespace = "ps2";
             });
 }
+```
+
+### Using multiple namespaces or service ids
+
+To talk to several namespaces (or use a different service id per namespace) in the same
+application, call `AddCensusServices` once per configuration and give each one a name. Each named
+registration gets its own `CensusOptions` and its own `HttpClient`, and its `ICensusClient`,
+`ICensusQueryFactory` and `ICensusStreamClient` are registered as keyed services under that name.
+
+```C#
+services.AddCensusServices("pc", options =>
+        {
+            options.CensusServiceId = "my-pc-service-id";
+            options.CensusServiceNamespace = "ps2:v2";
+        })
+        .AddCensusServices("ps4us", options =>
+        {
+            options.CensusServiceId = "my-ps4-service-id";
+            options.CensusServiceNamespace = "ps2ps4us:v2";
+            options.CensusTimeout = TimeSpan.FromSeconds(30);
+        });
+```
+
+Resolve a named configuration with `[FromKeyedServices]`, or with `GetRequiredKeyedService` when
+the name is only known at runtime:
+
+```C#
+public class PcCharacterService([FromKeyedServices("pc")] ICensusClient censusClient)
+{
+}
+
+var censusClient = serviceProvider.GetRequiredKeyedService<ICensusClient>("ps4us");
+```
+
+Named registrations are independent of the unnamed `AddCensusServices()`. Both can be used
+together, and the unnamed services are only registered if `AddCensusServices()` is also called.
+Named options can also be bound from configuration with
+`services.Configure<CensusOptions>("pc", configuration.GetSection("Census:Pc"))`.
+
+To customize a named registration's `HttpClient`, use `CensusServiceExtensions.GetCensusHttpClientName`:
+
+```C#
+services.AddHttpClient(CensusServiceExtensions.GetCensusHttpClientName("pc"))
+        .AddStandardResilienceHandler();
 ```
 
 ### Cancelling a query
